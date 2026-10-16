@@ -97,3 +97,19 @@ Linux only (Ubuntu, kernel 7.0.0-38, .NET 10.0.12); Windows and macOS are not se
 ### Windows agy shape
 
 Not settled: only the owner can check whether the Windows installer places `agy.exe` or a batch shim. The runner never launches batch files (DESIGN DL-14). Carried to Phase 7.
+
+## Execution, Phase 4, 2026-10-16
+
+### Fixtures
+
+The plan expected the step-1 agy outputs to be gone and fixtures to be mostly synthetic. Most of those outputs were still in the session record verbatim, so 13 of the 14 fixture groups are transcriptions of real agy 1.3.5 output (conversation ids replaced, not compared byte for byte with the deleted files) and only the not-signed-in pair is synthetic (built from the documented text). Provenance per file: `tests/PinkRooster.Extensions.AI.Antigravity.Tests/Fixtures/README.md`. A newly captured set is still to replace the transcribed files in Phase 7. Source: session record of the runs T-A1, T-A3, T-B2, T-B4, T-B5, T-C4, T-D4, G2, G5, J1, 2026-10-16.
+
+### Names the mapper uses, at the floor version
+
+`ChatFinishReason.Stop`, `UsageContent`, `ChatResponseUpdate(ChatRole?, IList<AIContent>?)` with `ResponseId`, `ModelId`, `CreatedAt`, `FinishReason`, `RawRepresentation`, `AdditionalProperties`, `ChatResponse.Usage`, `ChatOptions.Instructions`, `ChatOptions.Reasoning.Effort` and `ChatClientMetadata(providerName, providerUri, defaultModelId)` all compile against Microsoft.Extensions.AI.Abstractions 10.3.0 (net8.0 and net10.0) without suppressions. This settles the "unverified" note of DESIGN §4.3 for the floor version. Source: build output of Phase 4, 2026-10-16.
+
+### Behavior choices made while building the client
+
+- `GetService` returns the client only for `typeof(AntigravityChatClient)`, as SPEC FR-018 says, not for `IChatClient` or `object` (the usual convention in other clients returns it for any type the client implements). Kept as specified.
+- A response format other than plain text is refused with `NotSupportedException` until Phase 5 adds structured output; no test locks this in.
+- Tests were checked to bite by two mutations: logging the prompt makes 6 logging tests fail; adding a retry on process failure makes the "never retried" test fail.
