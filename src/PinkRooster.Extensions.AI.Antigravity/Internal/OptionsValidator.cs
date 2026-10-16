@@ -57,6 +57,13 @@ internal static class OptionsValidator
             {
                 throw new ArgumentException("EnvironmentVariables contains an invalid variable name.", nameof(options));
             }
+
+            if (options.IsolateAgyHome && InvocationBuilder.IsolationApplies && name == InvocationBuilder.HomeVariable)
+            {
+                throw new ArgumentException(
+                    $"EnvironmentVariables may not set {InvocationBuilder.HomeVariable} while IsolateAgyHome is true: the library gives each request its own home.",
+                    nameof(options));
+            }
         }
 
         if (options.AdditionalArguments is null)

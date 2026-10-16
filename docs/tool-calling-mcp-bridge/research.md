@@ -80,3 +80,11 @@ Read from the repo (no external search; every external unknown was already in th
 - **Documents that say "tools rejected" or "FR-028 never writes settings":** `docs/specification.md` (O-1, FR-008, FR-028, NFR-005/006/008, Q4, Q-D1 and O-13), `docs/decisions.md` (A1, S3, M1, M3, L3, Q-D1 follow-ups), `docs/software-design.md` (C-components, DL-05, DL-25, R-3), `docs/deferred.md` (rows 1 and the home), `README.md`, `CLAUDE.md` (the "Caller tools throw NotSupportedException" sentence and the Single-owners list), `docs/antigravity-chat-client/owner-run.md`.
 
 Unknowns carried into phases as `Settle first`: whether `AIFunction.JsonSchema`, the approval types and `ChatFinishReason` members used exist at the 10.3.0 floor (phase 2); whether a loopback listener can be opened without elevated rights through the BCL types the executor chooses (phase 2); how a caller-set `HOME` in `EnvironmentVariables` is treated (phase 1).
+
+## Home precedence (2026-10-16, phase 1)
+
+Decision: the library's redirect wins, and a caller who wants to control the home variable must turn isolation off. `OptionsValidator` rejects a `HOME` entry in `EnvironmentVariables` when `IsolateAgyHome` is true and the platform is Linux (the only platform where isolation is applied); no silent override and no silent drop. The redirect variable is `HOME` on Linux; on other platforms isolation is not applied (spec), so no variable is chosen for them. `IsolateAgyHome = true` on an unverified platform is accepted and has no effect, with one debug log entry at client creation. Why: a silent override would hide the caller's setting; a validator error names the fix.
+
+## AGENTS.md size (2026-10-16, phase 1)
+
+agy truncates a single rule file above 24,000 bytes ([rules docs](https://antigravity.google/docs/rules/), no page date, checked 2026-10-16; the page measures after `@[label](path)` includes expand, which the library never writes). The library measures the UTF-8 byte count of the whole `AGENTS.md` content it writes (preamble, system texts, and in phase 2 the tool instruction) against 24,000 and refuses with `AntigravityPromptTooLargeException` before any process starts. Bytes, not characters, because the docs say bytes. The `MaxPromptLength` character limit keeps applying to the prompt only.

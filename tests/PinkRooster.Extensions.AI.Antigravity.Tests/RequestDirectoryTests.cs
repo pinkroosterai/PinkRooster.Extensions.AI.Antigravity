@@ -35,6 +35,36 @@ public sealed class RequestDirectoryTests : IDisposable
     }
 
     [Fact]
+    public void A_home_is_created_next_to_the_request_directory_and_both_are_removed_together()
+    {
+        var directory = RequestDirectory.Create(_scratch, withHome: true);
+        string path = directory.Path;
+        string? home = directory.HomePath;
+
+        Assert.NotNull(home);
+        Assert.True(Directory.Exists(path));
+        Assert.True(Directory.Exists(home));
+        Assert.NotEqual(path, home);
+        Assert.Equal(Path.GetDirectoryName(path), Path.GetDirectoryName(home));
+
+        directory.WriteAgentsFile("rule\n");
+        Assert.Equal("rule\n", File.ReadAllText(Path.Combine(path, "AGENTS.md")));
+
+        directory.Dispose();
+
+        Assert.False(Directory.Exists(path));
+        Assert.False(Directory.Exists(home));
+    }
+
+    [Fact]
+    public void Without_a_home_none_is_created()
+    {
+        using var directory = RequestDirectory.Create(_scratch);
+
+        Assert.Null(directory.HomePath);
+    }
+
+    [Fact]
     public void Default_root_gives_a_new_empty_directory_with_the_library_prefix()
     {
         using var directory = RequestDirectory.Create(null);

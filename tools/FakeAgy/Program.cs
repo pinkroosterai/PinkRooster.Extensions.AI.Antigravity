@@ -15,6 +15,8 @@
 //   FAKE_AGY_ECHO_CWD=1      write the working directory to standard output
 //   FAKE_AGY_ECHO_ENV=NAME   write the value of that environment variable (or "<unset>") to standard output
 //   FAKE_AGY_READ_STDIN=1    read standard input to its end and write "stdin-length:N"
+//   FAKE_AGY_ECHO_CONTEXT=1  write a success envelope whose response lists HOME, whether it is a directory, the contents of
+//                            AGENTS.md in the working directory (or "<none>") and the received arguments
 //   FAKE_AGY_WRITE_FILE=NAME create that file in the working directory
 //   FAKE_AGY_CHILD_SLEEP_MS  start a child that sleeps this long and shares the standard streams
 //   FAKE_AGY_CHILD_PIDFILE   file that receives the child's process id
@@ -109,6 +111,19 @@ if (Env("FAKE_AGY_ECHO_ARGS") == "1")
 if (Env("FAKE_AGY_ECHO_CWD") == "1")
 {
     Write(stdout, Directory.GetCurrentDirectory());
+}
+
+if (Env("FAKE_AGY_ECHO_CONTEXT") == "1")
+{
+    string? homeValue = Environment.GetEnvironmentVariable("HOME");
+    string agentsPath = Path.Combine(Directory.GetCurrentDirectory(), "AGENTS.md");
+    string context =
+        "home=" + homeValue + "\n" +
+        "home_exists=" + (homeValue is not null && Directory.Exists(homeValue)) + "\n" +
+        "cwd=" + Directory.GetCurrentDirectory() + "\n" +
+        "agents=" + (File.Exists(agentsPath) ? File.ReadAllText(agentsPath) : "<none>") + "\n" +
+        "args=" + JsonSerializer.Serialize(args);
+    Write(stdout, JsonSerializer.Serialize(new { status = "SUCCESS", response = context, conversation_id = "ctx-1" }));
 }
 
 if (Env("FAKE_AGY_ECHO_ENV") is { } variable)

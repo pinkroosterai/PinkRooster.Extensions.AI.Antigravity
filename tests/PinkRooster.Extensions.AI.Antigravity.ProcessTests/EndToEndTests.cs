@@ -55,4 +55,53 @@ public class EndToEndTests
 
         Assert.Equal("1.2.0", ex.FoundVersion);
     }
+
+    private static (string Home, string Cwd, string Agents, string Args) ParseContext(string text)
+    {
+        string Value(string key) => text.Split('\n').First(l => l.StartsWith(key + "=", StringComparison.Ordinal))[(key.Length + 1)..];
+        string agents = text[(text.IndexOf("agents=", StringComparison.Ordinal) + "agents=".Length)..text.IndexOf("\nargs=", StringComparison.Ordinal)];
+        return (Value("home"), Value("cwd"), agents, text[(text.IndexOf("args=", StringComparison.Ordinal) + 5)..]);
+    }
+
+    [Fact]
+    public async Task Every_request_runs_with_a_fresh_home_and_the_system_text_in_agents_md_through_the_real_runner()
+    {
+        if (!Internal.InvocationBuilder.IsolationApplies)
+        {
+            return;
+        }
+
+        string root = Path.Combine(Path.GetTempPath(), "agy-e2e-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var client = new AntigravityChatClient(new AntigravityChatClientOptions
+            {
+                ExecutablePath = FakeAgyHost.Executable,
+                SkipVersionCheck = true,
+                TemporaryDirectoryRoot = root,
+                EnvironmentVariables = { ["FAKE_AGY_ECHO_CONTEXT"] = "1" },
+            });
+
+            var first = ParseContext((await client.GetResponseAsync("Say pong", new ChatOptions { Instructions = "SECRET-SYSTEM" })).Text);
+            var second = ParseContext((await client.GetResponseAsync("Say pong again")).Text);
+
+            Assert.NotEqual(Environment.GetEnvironmentVariable("HOME"), first.Home);
+            Assert.NotEqual(first.Home, second.Home);
+            Assert.StartsWith(root, first.Home, StringComparison.Ordinal);
+            Assert.Contains("SECRET-SYSTEM", first.Agents);
+            Assert.Contains(AntigravityChatClientOptions.DefaultSystemPreamble, first.Agents);
+            Assert.DoesNotContain("SECRET-SYSTEM", first.Args);
+            Assert.DoesNotContain(AntigravityChatClientOptions.DefaultSystemPreamble, first.Args);
+            Assert.False(Directory.Exists(first.Home));
+            Assert.False(Directory.Exists(first.Cwd));
+            Assert.Empty(Directory.EnumerateFileSystemEntries(root));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
 }

@@ -71,11 +71,23 @@ using IChatClient withMiddleware = client.AsBuilder().UseOpenTelemetry().Build()
 
 **What it cannot prevent:**
 
-- **Your MCP servers run on every request.** agy starts every MCP server enabled in your agy settings (four `npx` processes on the test machine) and the model can call their tools. That adds start-up time and side effects beyond files. The library does not read or change agy's settings; use `agy mcp list` and `agy mcp disable` yourself if you want fewer.
-- **Your agy settings can widen permissions.** Allow-rules for commands or file writes in agy's `settings.json` apply to requests made through this library.
+- **Your MCP servers run on every request** (unless `IsolateAgyHome` applies, see "Isolated agy home"). agy starts every MCP server enabled in your agy settings (four `npx` processes on the test machine) and the model can call their tools. That adds start-up time and side effects beyond files. The library does not read or change agy's settings; use `agy mcp list` and `agy mcp disable` yourself if you want fewer.
+- **Your agy settings can widen permissions** (unless `IsolateAgyHome` applies). Allow-rules for commands or file writes in agy's `settings.json` apply to requests made through this library.
 - **agy stores a transcript of every request**, including the full prompt and answer text, under `~/.gemini/antigravity-cli/brain/`. The library cannot switch that off.
 - **The prompt is visible in the process list** while agy runs, because agy takes the prompt only as a command-line argument.
 - **Writes outside the request directory are not blocked.**
+
+## Isolated agy home
+
+On Linux every request runs agy with its own throwaway home directory (`HOME`), created next to the request directory and deleted with it (`IsolateAgyHome`, on by default). The system text (`SystemPreamble`, system messages, `Instructions`) travels in an `AGENTS.md` file in the request directory instead of the prompt, so it also stays off the command line; a system text over 24,000 bytes is refused, because agy truncates a longer rule file.
+
+What changes for you:
+
+- agy does not see your own agy rules (`GEMINI.md`/`AGENTS.md` in your home), skills, plugins, settings or MCP servers. Before this, a global rule file could add text to every answer (a suffix rule was seen in a test) and cost about 5,000 input tokens (indicative).
+- Nothing of a request stays in agy's history; the home is deleted afterwards.
+- Cost: about 18 MB is written per request (agy unpacks a binary into a fresh home); run time was unchanged in the one test.
+- Your sign-in is not stored in the home (verified once on Linux: an empty `HOME` was still signed in). If you sign in with an API key or Application Default Credentials through agy settings, that is untested: set `IsolateAgyHome` to `false`.
+- On Windows and macOS isolation is not applied; the option has no effect there until it is verified.
 
 ## Cost and speed
 
@@ -102,6 +114,7 @@ Validated and copied when the client is created; later changes to the instance h
 | `AdditionalArguments` | empty | Extra agy arguments. Flags that the library sets or that break safety (`-p`, `--output-format`, `--input-format`, `--json-schema`, `--print-timeout`, `--model`, `--effort`, `--disable-slash-commands`, `--dangerously-skip-permissions`, `--add-dir`, `-c`/`--continue`, `--conversation`, `--mode`, `--project`, `--new-project`, `-i`/`--prompt-interactive`, `--agent`) raise `ArgumentException` when the client is created. |
 | `SystemPreamble` | built-in text | Placed at the start of every prompt. Must not be empty. |
 | `MaxOutputBytes` | 16 MiB | Most standard output read; more raises `AntigravityOutputException`. |
+| `IsolateAgyHome` | true on Linux, false elsewhere | Every request runs agy with its own throwaway home (`HOME`) and sends the system text in an `AGENTS.md` file. agy then sees none of your own agy rules, skills, settings or MCP servers, and keeps no history of the request. Writes about 18 MB per request. Applied on Linux only; `true` elsewhere has no effect. While true on Linux, `EnvironmentVariables` may not set `HOME`. See "Isolated agy home". |
 
 ## What each `ChatOptions` member does
 

@@ -56,4 +56,14 @@ public sealed class AntigravityChatClientOptions
 
     /// <summary>The most bytes read from agy's standard output before the request fails. Default 16 MiB.</summary>
     public int MaxOutputBytes { get; set; } = 16 * 1024 * 1024;
+
+    /// <summary>
+    /// When true, every request runs agy with its own throwaway home directory (the <c>HOME</c> variable) and sends the
+    /// system text in an <c>AGENTS.md</c> file in the request directory. agy then sees none of the user's own agy rules,
+    /// skills, settings or MCP servers, and nothing of the request stays in agy's history. Costs about 18 MB written per
+    /// request. The default is true on Linux, the only platform where this is verified, and false elsewhere; setting it to true
+    /// on another platform has no effect. When true on Linux, <see cref="EnvironmentVariables"/> may not set <c>HOME</c>.
+    /// Setting it to false runs agy in the user's own home as before.
+    /// </summary>
+    public bool IsolateAgyHome { get; set; } = OperatingSystem.IsLinux();
 }

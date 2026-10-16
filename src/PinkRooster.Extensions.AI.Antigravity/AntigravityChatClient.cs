@@ -30,6 +30,7 @@ public sealed class AntigravityChatClient : IChatClient
     private readonly PromptLimits _limits;
     private readonly ChatClientMetadata _metadata;
     private readonly ISchemaValidator _schemaValidator;
+    private readonly bool _isolateHome;
     private int _disposed;
     private int _newerVersionLogged;
 
@@ -54,6 +55,11 @@ public sealed class AntigravityChatClient : IChatClient
 
         _options = Copy(options);
         _logger = logger ?? NullLogger.Instance;
+        _isolateHome = _options.IsolateAgyHome && InvocationBuilder.IsolationApplies;
+        if (_options.IsolateAgyHome && !_isolateHome)
+        {
+            LogMessages.IsolationNotSupported(_logger);
+        }
         _runner = runner;
         _schemaValidator = schemaValidator ?? SchemaValidator.Instance;
         _versionChecker = new AgyVersionChecker(runner, _options, resolvePath);
@@ -82,11 +88,23 @@ public sealed class AntigravityChatClient : IChatClient
         {
             using RequestDirectory directory = RequestDirectory.Create(
                 _options.TemporaryDirectoryRoot,
-                (path, _) => LogMessages.RequestDirectoryNotDeleted(_logger, path));
+                (path, _) => LogMessages.RequestDirectoryNotDeleted(_logger, path),
+                withHome: _isolateHome);
+            if (prepared.AgentsFile is not null)
+            {
+                directory.WriteAgentsFile(prepared.AgentsFile);
+            }
 
             string? schemaFile = request.ResponseKind == ResponseKind.JsonSchema ? directory.WriteSchemaFile(request.SchemaText!) : null;
             AgyInvocation invocation = InvocationBuilder.Build(
-                prompt, modelId, effort, schemaFile, _options.Timeout, _options.AdditionalArguments, _options.EnvironmentVariables);
+                prompt,
+                modelId,
+                effort,
+                schemaFile,
+                _options.Timeout,
+                _options.AdditionalArguments,
+                _options.EnvironmentVariables,
+                homeDirectory: directory.HomePath);
             if (invocation.EffortRequested && !invocation.EffortApplied)
             {
                 LogMessages.EffortNotApplied(_logger, modelId);
@@ -158,7 +176,12 @@ public sealed class AntigravityChatClient : IChatClient
         {
             using RequestDirectory directory = RequestDirectory.Create(
                 _options.TemporaryDirectoryRoot,
-                (path, _) => LogMessages.RequestDirectoryNotDeleted(_logger, path));
+                (path, _) => LogMessages.RequestDirectoryNotDeleted(_logger, path),
+                withHome: _isolateHome);
+            if (prepared.AgentsFile is not null)
+            {
+                directory.WriteAgentsFile(prepared.AgentsFile);
+            }
 
             AgyInvocation invocation = InvocationBuilder.Build(
                 prepared.Prompt,
@@ -168,7 +191,8 @@ public sealed class AntigravityChatClient : IChatClient
                 _options.Timeout,
                 _options.AdditionalArguments,
                 _options.EnvironmentVariables,
-                streamJson: true);
+                streamJson: true,
+                homeDirectory: directory.HomePath);
             if (invocation.EffortRequested && !invocation.EffortApplied)
             {
                 LogMessages.EffortNotApplied(_logger, prepared.ModelId);
@@ -342,7 +366,8 @@ public sealed class AntigravityChatClient : IChatClient
         string Prompt,
         ResolvedAgy Agy,
         string? ModelId,
-        ReasoningEffort? Effort);
+        ReasoningEffort? Effort,
+        string? AgentsFile);
 
     // Everything that happens before a slot is taken and agy is started; shared by the buffered and the streaming call.
     private async Task<Prepared> PrepareAsync(IEnumerable<ChatMessage> messages, ChatOptions? options, CancellationToken cancellationToken)
@@ -356,7 +381,15 @@ public sealed class AntigravityChatClient : IChatClient
         // An unusable schema must fail here, before agy is run and paid for.
         ICompiledSchema? schema = request.ResponseKind == ResponseKind.JsonSchema ? _schemaValidator.Compile(request.SchemaText!) : null;
 
-        string prompt = PromptBuilder.Build(request, _options.SystemPreamble, PromptBuilder.NewNonce(), _limits);
+        // With an isolated home the system text travels in AGENTS.md (refused when agy would truncate it); otherwise in the prompt.
+        string? agentsFile = null;
+        if (_isolateHome)
+        {
+            agentsFile = AgentsFile.Build(request, _options.SystemPreamble);
+            AgentsFile.Check(agentsFile);
+        }
+
+        string prompt = PromptBuilder.Build(request, _options.SystemPreamble, PromptBuilder.NewNonce(), _limits, systemTextInFile: _isolateHome);
 
         ResolvedAgy agy = await _versionChecker.EnsureReadyAsync(cancellationToken).ConfigureAwait(false);
         if (agy.NewerThanTested && Interlocked.Exchange(ref _newerVersionLogged, 1) == 0)
@@ -373,7 +406,7 @@ public sealed class AntigravityChatClient : IChatClient
             LogMessages.IgnoredOptions(_logger, string.Join(", ", ignored));
         }
 
-        return new Prepared(request, schema, prompt, agy, modelId, effort);
+        return new Prepared(request, schema, prompt, agy, modelId, effort, agentsFile);
     }
 
     /// <inheritdoc />
@@ -417,5 +450,6 @@ public sealed class AntigravityChatClient : IChatClient
             AdditionalArguments = new List<string>(source.AdditionalArguments),
             SystemPreamble = source.SystemPreamble,
             MaxOutputBytes = source.MaxOutputBytes,
+            IsolateAgyHome = source.IsolateAgyHome,
         };
 }

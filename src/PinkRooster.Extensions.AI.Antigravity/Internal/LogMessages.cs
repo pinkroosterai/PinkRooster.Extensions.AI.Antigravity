@@ -27,6 +27,9 @@ internal static partial class LogMessages
     [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "agy denied actions ({ActionKinds}) but still returned an answer.")]
     public static partial void DeniedActionsWithAnswer(ILogger logger, string actionKinds);
 
+    [LoggerMessage(EventId = 8, Level = LogLevel.Debug, Message = "IsolateAgyHome is true but isolation is only applied on Linux; requests run in the user's own agy home.")]
+    public static partial void IsolationNotSupported(ILogger logger);
+
     [LoggerMessage(EventId = 7, Level = LogLevel.Warning, Message = "The request directory '{Path}' could not be deleted.")]
     public static partial void RequestDirectoryNotDeleted(ILogger logger, string path);
 }

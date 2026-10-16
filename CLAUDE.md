@@ -6,7 +6,7 @@ Current phase: implementation. The state of the work is the plan file, `docs/ant
 
 A C# class library, `PinkRooster.Extensions.AI.Antigravity`, that implements Microsoft.Extensions.AI's `IChatClient` on top of the Antigravity CLI (binary `agy`, Google's successor to the Gemini CLI, shut down 2026-06-18). Each request runs `agy` once in non-interactive print mode, in a new empty directory, and its JSON output is mapped back to `ChatResponse`.
 
-Version 1: plain text and JSON-schema responses (`ChatResponseFormat.ForJsonSchema`, `GetResponseAsync<T>`). Caller tools throw `NotSupportedException`; sampling options are ignored; streaming yields incremental text for plain-text requests (JSON-format requests yield one update). The out-of-scope list with extension notes is `docs/deferred.md`.
+Version 1: plain text and JSON-schema responses (`ChatResponseFormat.ForJsonSchema`, `GetResponseAsync<T>`). Caller tools throw `NotSupportedException` (until phase 2 of `docs/tool-calling-mcp-bridge/plan.md` lands); on Linux every request runs in a per-request agy home with the system text in `AGENTS.md` (`IsolateAgyHome`); sampling options are ignored; streaming yields incremental text for plain-text requests (JSON-format requests yield one update). The out-of-scope list with extension notes is `docs/deferred.md`.
 
 ## Where things are
 

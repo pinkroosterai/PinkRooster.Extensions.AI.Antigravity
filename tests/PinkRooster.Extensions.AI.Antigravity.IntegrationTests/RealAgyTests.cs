@@ -193,6 +193,21 @@ public sealed class RealAgyTests : IDisposable
     }
 
     [IntegrationFact]
+    public async Task Isolated_home_keeps_sign_in_and_follows_an_agents_md_rule()
+    {
+        using AntigravityChatClient client = Client(o => o.IsolateAgyHome = true);
+        var options = new ChatOptions { Instructions = "End every answer with the exact line: PINEAPPLE-7" };
+
+        ChatResponse response = await client.GetResponseAsync("In one sentence, explain what a hash map is.", options);
+
+        Describe(response);
+        // Sign-in survived the home redirect (no exception above) and the system text reached the model through AGENTS.md.
+        Assert.Contains("PINEAPPLE-7", response.Text);
+        // The user's own global rules must not leak into the answer (a rule in ~/.gemini/config/GEMINI.md can add suffixes).
+        _output.WriteLine("Check by eye: the answer above must not end with lines from your own global agy rules.");
+    }
+
+    [IntegrationFact]
     public async Task Reasoning_effort_with_base_model()
     {
         using AntigravityChatClient baseModel = Client(o => o.DefaultModelId = "gemini-3.8-flash");

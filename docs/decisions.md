@@ -124,3 +124,12 @@ Made while reviewing `specification.md` and `software-design.md`; nothing you an
 | L3/L4 | `DefaultReasoningEffort` is typed `ReasoningEffort?`; `AdditionalArguments` also rejects `--model`, `--effort`, `--disable-slash-commands`. | F-37, FR-029. |
 | M4 | The prompt limit applies to characters and to the platform's per-argument size, the smaller winning. | Operating-system limits are in bytes (FR-012). |
 | X5/J3 | A `SUCCESS` run without `structured_output` is a normal failure path, not an agy defect. | F-35. |
+
+## 13. Amendments (2026-10-16, `docs/tool-calling-mcp-bridge/spec.md`)
+
+| ID | Change | Why |
+|---|---|---|
+| A1 / FR-028 | The library still never reads, copies or changes the user's own agy files, but writes files inside an agy home it created for one request. | Lets each request run with its own settings and MCP servers (O-13) without touching the user's. |
+| L3 | New option `IsolateAgyHome` (default true on Linux, false elsewhere; no effect off Linux). While true on Linux, `EnvironmentVariables` may not set `HOME`. | Per-request home; the verified platform is Linux. |
+| S3 / M1 | With an isolated home the preamble and all system text go into `AGENTS.md` in the request directory and out of the prompt; a text over 24,000 bytes (agy's limit for one rule file) is refused with `AntigravityPromptTooLargeException`. Without isolation both stay in the prompt as before. | `AGENTS.md` acts as a system-level rule and left the command line; agy truncates longer files silently. |
+| M3 | Unchanged by phase 1; phase 2 of the same plan replaces the tool refusal. | |

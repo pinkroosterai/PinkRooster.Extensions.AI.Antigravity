@@ -15,6 +15,12 @@ internal sealed record AgyInvocation(
 /// </summary>
 internal static class InvocationBuilder
 {
+    /// <summary>The variable that tells agy where its home is (Linux; the only platform where isolation is applied).</summary>
+    public const string HomeVariable = "HOME";
+
+    /// <summary>True where an agy home is handed to each request (Linux only, the verified platform).</summary>
+    public static bool IsolationApplies => OperatingSystem.IsLinux();
+
     private static readonly string[] LevelSuffixes = ["-low", "-medium", "-high", "-xhigh", "-max"];
 
     public static AgyInvocation Build(
@@ -25,7 +31,8 @@ internal static class InvocationBuilder
         TimeSpan timeout,
         IEnumerable<string> additionalArguments,
         IEnumerable<KeyValuePair<string, string?>> environmentVariables,
-        bool streamJson = false)
+        bool streamJson = false,
+        string? homeDirectory = null)
     {
         ArgumentNullException.ThrowIfNull(prompt);
         ArgumentNullException.ThrowIfNull(additionalArguments);
@@ -72,6 +79,12 @@ internal static class InvocationBuilder
         foreach (KeyValuePair<string, string?> pair in environmentVariables)
         {
             environment[pair.Key] = pair.Value;
+        }
+
+        if (homeDirectory is not null)
+        {
+            // The library's home wins over anything else; OptionsValidator keeps callers from setting it themselves.
+            environment[HomeVariable] = homeDirectory;
         }
 
         return new AgyInvocation(arguments, environment, effortRequested, effortApplied);

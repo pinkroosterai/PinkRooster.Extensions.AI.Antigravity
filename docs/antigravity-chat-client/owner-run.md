@@ -8,14 +8,14 @@ Written 2026-10-16 for plan phase 7. These runs call the model, so they spend to
 - The solution builds: `dotnet build -warnaserror` from the repository root.
 - Cost, estimated and not measured: about 18 model calls (13 in `RealAgyTests`, 5 in the capture), each around 17,000 to 22,000 input tokens on `gemini-3.8-flash-low`, so roughly 300,000 to 400,000 input tokens. The unsatisfiable-schema and essay-length cases are the longest. Each test also leaves one more conversation in `~/.gemini/antigravity-cli/brain/`.
 
-## Run 1: the library against the real agy (14 calls)
+## Run 1: the library against the real agy (15 calls)
 
 ```
 AGY_INTEGRATION_TESTS=1 dotnet test tests/PinkRooster.Extensions.AI.Antigravity.IntegrationTests \
   --filter "FullyQualifiedName~RealAgyTests" --logger "console;verbosity=detailed"
 ```
 
-Expected: 9 tests pass and 1 is skipped (the not-signed-in one needs run 3). A failure prints what was observed.
+Expected: 10 tests pass and 1 is skipped (the not-signed-in one needs run 3). A failure prints what was observed.
 
 | Test | Calls | Should show | A failure looks like |
 |---|---|---|---|
@@ -27,6 +27,7 @@ Expected: 9 tests pass and 1 is skipped (the not-signed-in one needs run 3). A f
 | `Preamble_blocks_tool_use_sample` | 5 | A summary line "N of 5 runs had a denied action, M of 5 used more than one turn"; informational | Only the caller's directory is asserted; a changed directory fails it |
 | `Unicode_roundtrip` | 1 | The answer contains `héllo 日本語 😀` | Garbled characters |
 | `Streaming_yields_text_updates_that_join_to_the_answer` | 1 | Several updates (the output line says how many and when the first and last arrived: the first should come well before the last); text contains "twenty"; usage and response id set | One update only (agy sent the text in one piece, or the stream reader dropped events); an `AntigravityOutputException` (the stream shape differs from `docs/streaming-responses/capture/`) |
+| `Isolated_home_keeps_sign_in_and_follows_an_agents_md_rule` | 1 | No exception (sign-in survives the per-request `HOME`); the answer contains `PINEAPPLE-7` (the system text arrived through `AGENTS.md`); the answer has no trailing lines from your own global agy rules | `AntigravityNotAuthenticatedException` (sign-in does not survive the redirect on this machine: set `IsolateAgyHome` to false and report); no `PINEAPPLE-7` (the `AGENTS.md` rule was ignored); user-rule suffix lines still present |
 | `Reasoning_effort_with_base_model` | 2 | Both answers contain "ok" (the effort is passed for `gemini-3.8-flash` and left out for `gemini-3.8-flash-low`) | `AntigravityProcessException` mentioning `conflicts with --effort` |
 
 ## Run 2: capture fresh fixtures (3 free, 5 paid calls)

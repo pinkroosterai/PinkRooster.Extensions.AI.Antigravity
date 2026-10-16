@@ -47,7 +47,7 @@ public sealed class ClientTests : IDisposable
     public async Task The_prompt_reaches_agy_as_the_last_argument_after_p()
     {
         FakeProcessRunner runner = Clients.Runner("success-text.json");
-        using AntigravityChatClient client = Clients.Create(runner);
+        using AntigravityChatClient client = Clients.Create(runner, o => o.IsolateAgyHome = false); // preamble in the prompt: the unisolated path
 
         await client.GetResponseAsync(Clients.User("Say pong"));
 
@@ -80,7 +80,7 @@ public sealed class ClientTests : IDisposable
         var runner = new FakeProcessRunner().Returns(FakeProcessRunner.Ok("1.3.5"))
             .Returns(r => { seen.Add(r.WorkingDirectory); Assert.Empty(Directory.EnumerateFileSystemEntries(r.WorkingDirectory)); return Fixture.Result("success-text.json"); })
             .Returns(r => { seen.Add(r.WorkingDirectory); return Fixture.Result("success-text.json"); });
-        using AntigravityChatClient client = Clients.Create(runner, o => o.TemporaryDirectoryRoot = _root);
+        using AntigravityChatClient client = Clients.Create(runner, o => { o.TemporaryDirectoryRoot = _root; o.IsolateAgyHome = false; });
 
         await client.GetResponseAsync(Clients.User());
         await client.GetResponseAsync(Clients.User());
