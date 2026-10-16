@@ -34,3 +34,14 @@ Two runs on agy 1.4.0, model gemini-3.8-flash-low, new empty directory, exit 0, 
 - In the tool run, `agent_response` steps 1 and 3 (before each tool call) had **no** text; only step 5 (after the tools) had text. So the narration-between-tools case did not occur in this run; whether it ever does is unknown.
 - `result` has `conversation_id`, `status` (`SUCCESS`), `response`, `duration_seconds`, `num_turns`, `usage` (summed over steps). `result.response` equalled the joined deltas in both runs.
 - Not seen: `denied_actions`, `error`, the timeout notice, any non-SUCCESS status, `structured_output`.
+
+## Planning, 2026-10-16
+
+Read from the repo (nothing external; all unknowns were internal or already captured).
+
+- **Plain-JSON requests are not covered by the spec.** `GetResponseAsync` has three response kinds (`ResponseKind.Text`, `Json`, `JsonSchema`, `AntigravityChatClient.cs`); `Json` validates the whole text after the run (`StructuredResultChecker.CheckPlainJson`). The spec only names plain text and schema requests. Plan default: `Json` takes the same one-update path as schema, because it needs the complete text. Recorded in the plan Context; the executor adds it to the spec's Decisions as `executed`/assumed note.
+- **Trailing newline.** `ResponseMapper.PlainText` drops one trailing line terminator from `response`; the stream's last delta is `"\n"` (`capture/one-step.ndjson`). Joined deltas therefore equal `result.response`, not `GetResponseAsync` text, unless the terminator is withheld. The spec criterion "joined text equals `GetResponseAsync`" needs that handled.
+- **Runner contract.** `IAgyProcessRunner.RunAsync` returns after exit with whole stdout (`AgyProcessTypes.cs`); `AgyProcessRunner` is the only `Process` user. The version check also uses it. A line-by-line mode is a new member next to it; the test double `FakeProcessRunner` implements the interface.
+- **Classifier input.** `ErrorClassifier.Classify` takes an `AgyProcessResult` and parses stdout as one envelope; its timeout rule also reads stderr for agy's own notice. The stream's `result` event has the envelope's fields (`capture/`) but is wrapped under `result`.
+- **FakeAgy** writes all output at once, then sleeps (`tools/FakeAgy/Program.cs`); it cannot emit timed lines yet, which the first-update-before-exit test needs.
+- **Docs that state "one update":** `README.md` line ~138 and ~178, `docs/specification.md` (O-2, FR-019, EC-34), `docs/software-design.md` (§4.3, DL-18, FR-019 rows), `docs/deferred.md` row 2.
