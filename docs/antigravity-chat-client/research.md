@@ -134,3 +134,17 @@ Source: scratch project `/tmp/vspike` (deleted with the machine's temporary file
 ### Typed extension round trip
 
 `GetResponseAsync<T>` works against the client for a record with strings, numbers, an array and an enum, and for `int`, `string[]` and an enum wrapped in `{"data": ...}`, with the schema path and with `useJsonSchemaResponseFormat: false` (plain JSON path; the extension then appends the schema to the prompt). This closes SPEC A-6 with a test, not only with the source reading. Source: `StructuredRoundTripTests`, 2026-10-16.
+
+## Execution, Phase 6, 2026-10-16
+
+### Package id
+
+`PinkRooster.Extensions.AI.Antigravity` and the shorter `PinkRooster.Extensions.AI` return 404 from the NuGet flat-container API and a search for `packageid:PinkRooster` returns no hits, so neither id is taken as of 2026-10-16. Whether the `PinkRooster.` prefix is reserved by someone else cannot be checked without an account on nuget.org. Source: api.nuget.org flat-container and the search service, 2026-10-16.
+
+### Package content
+
+The 0.1.0 package from a clean clone contains `net8.0` and `net10.0` assemblies with XML documentation, the README, the MIT licence expression and a symbols package. Dependencies: `LateApexEarlySpeed.Json.Schema` 4.2.2, `Microsoft.Extensions.AI.Abstractions` 10.3.0, `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.3, `Microsoft.Extensions.Logging.Abstractions` 10.0.3, `Microsoft.Extensions.Options` 10.0.3. No repository URL is set because no remote exists. Source: unpacked nupkg of the clean-clone build, 2026-10-16.
+
+### Process-runner overhead
+
+Median of 7 rounds, three runs: starting the fake agy by hand 23–25 ms, through the runner 24–25 ms; overhead −2 to +1 ms. Linux only. Source: `OverheadTests` output, 2026-10-16.
