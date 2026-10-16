@@ -291,7 +291,7 @@ public class StreamingTests
     public async Task Refused_input_surfaces_on_the_first_move_next_not_when_the_call_is_made()
     {
         using AntigravityChatClient client = Clients.Create(Clients.Runner());
-        var options = new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "one")] };
+        var options = new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "one")], ToolMode = ChatToolMode.RequireAny };
 
         IAsyncEnumerable<ChatResponseUpdate> updates = client.GetStreamingResponseAsync(Clients.User(), options);
 

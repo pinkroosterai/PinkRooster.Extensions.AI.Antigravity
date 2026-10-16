@@ -30,6 +30,9 @@ internal static partial class LogMessages
     [LoggerMessage(EventId = 8, Level = LogLevel.Debug, Message = "IsolateAgyHome is true but isolation is only applied on Linux; requests run in the user's own agy home.")]
     public static partial void IsolationNotSupported(ILogger logger);
 
+    [LoggerMessage(EventId = 9, Level = LogLevel.Debug, Message = "Tool {ToolName} finished in {ElapsedMs} ms (failed: {Failed}).")]
+    public static partial void ToolCallFinished(ILogger logger, string toolName, long elapsedMs, bool failed);
+
     [LoggerMessage(EventId = 7, Level = LogLevel.Warning, Message = "The request directory '{Path}' could not be deleted.")]
     public static partial void RequestDirectoryNotDeleted(ILogger logger, string path);
 }

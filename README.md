@@ -89,6 +89,27 @@ What changes for you:
 - Your sign-in is not stored in the home (verified once on Linux: an empty `HOME` was still signed in). If you sign in with an API key or Application Default Credentials through agy settings, that is untested: set `IsolateAgyHome` to `false`.
 - On Windows and macOS isolation is not applied; the option has no effect there until it is verified.
 
+## Tools
+
+Pass `AIFunction` tools in `ChatOptions.Tools` and agy can call them while it works on the request:
+
+```csharp
+var options = new ChatOptions { Tools = [AIFunctionFactory.Create((string city) => GetForecast(city), "forecast")] };
+ChatResponse response = await client.GetResponseAsync("Will it rain in Utrecht?", options);
+```
+
+How it works: for the request the library opens a private endpoint on `127.0.0.1` (random port, random token, valid only for that request), tells agy about it through the request's own agy home, and runs your function in your process whenever agy calls it. The answer comes back as text; **no tool call is returned to you**, so a surrounding `FunctionInvokingChatClient` never runs a tool itself and `FunctionCallContent` never appears in a response or in streamed updates. Tool calls run for as long as `Timeout` allows; a tool that takes minutes needs a larger `Timeout`.
+
+What to know before you use it:
+
+- **Requires `IsolateAgyHome`** (Linux): tool requests are refused where the home is not isolated.
+- **No approval step.** agy decides when to call a tool, with arguments the model chose (checked against the tool's JSON schema first). A tool with side effects runs whenever the model asks for it. Treat tool results as untrusted input to the model.
+- **`MaxToolCalls`** (default 20) limits the calls per request; further calls get an error result and agy decides what to do. `FunctionInvokingChatClient` cannot do this for you, because agy runs the calls itself.
+- A tool that throws gives agy a generic error ("The tool failed.") and is not rethrown to you. Tool arguments and results are never logged; tool names and durations are, at debug level.
+- agy may call several tools at the same time; your functions must be safe to run concurrently.
+- Cancelling the request, or reaching `Timeout`, ends agy and cancels the token your function received.
+- Not supported yet: tools together with a JSON response format, approval-required tools, `RequireAny`/`RequireSpecific`.
+
 ## Cost and speed
 
 - Every request costs at least about 17,000 input tokens of agy's own overhead (a one-word answer used 16,878 on agy 1.3.5). `Usage` reports what agy reports, overhead included.
@@ -114,11 +135,12 @@ Validated and copied when the client is created; later changes to the instance h
 | `AdditionalArguments` | empty | Extra agy arguments. Flags that the library sets or that break safety (`-p`, `--output-format`, `--input-format`, `--json-schema`, `--print-timeout`, `--model`, `--effort`, `--disable-slash-commands`, `--dangerously-skip-permissions`, `--add-dir`, `-c`/`--continue`, `--conversation`, `--mode`, `--project`, `--new-project`, `-i`/`--prompt-interactive`, `--agent`) raise `ArgumentException` when the client is created. |
 | `SystemPreamble` | built-in text | Placed at the start of every prompt. Must not be empty. |
 | `MaxOutputBytes` | 16 MiB | Most standard output read; more raises `AntigravityOutputException`. |
+| `MaxToolCalls` | 20 | Most tool calls agy may make in one request; further calls get an error result. At least 1. See "Tools". |
 | `IsolateAgyHome` | true on Linux, false elsewhere | Every request runs agy with its own throwaway home (`HOME`) and sends the system text in an `AGENTS.md` file. agy then sees none of your own agy rules, skills, settings or MCP servers, and keeps no history of the request. Writes about 18 MB per request. Applied on Linux only; `true` elsewhere has no effect. While true on Linux, `EnvironmentVariables` may not set `HOME`. See "Isolated agy home". |
 
 ## What each `ChatOptions` member does
 
-Honored: `ModelId`, `ResponseFormat`, `Instructions`, `Reasoning`. Rejected: `Tools` and `ToolMode`. Everything else is ignored, and a debug log entry names (never shows) the ones you set.
+Honored: `ModelId`, `ResponseFormat`, `Instructions`, `Reasoning`, and `Tools` with `ToolMode` null, auto or none (see "Tools"). Rejected: the unsupported tool cases below. Everything else is ignored, and a debug log entry names (never shows) the ones you set.
 
 | Member | Behavior |
 |---|---|
@@ -126,7 +148,7 @@ Honored: `ModelId`, `ResponseFormat`, `Instructions`, `Reasoning`. Rejected: `To
 | `ResponseFormat` | `Text`: plain. `Json`: the answer must be one JSON value. `ForJsonSchema`: structured output, see below. |
 | `Instructions` | Added to the system text of the prompt, after any system messages. |
 | `Reasoning` | `Effort` maps `Low`→low, `Medium`→medium, `High`→high, `ExtraHigh`→xhigh; `None` passes nothing; `Output` is ignored. agy rejects an effort together with a model name that already ends in `-low`, `-medium`, `-high`, `-xhigh` or `-max` (such as `gemini-3.8-flash-low`), so in that case the effort is **not passed** (debug log). Use a base name such as `gemini-3.8-flash` with an effort. |
-| `Tools`, `ToolMode` | A non-empty `Tools`, or a `ToolMode` other than none, raises `NotSupportedException` before anything runs: your tools are not forwarded, and silently dropping them would give wrong answers. |
+| `Tools`, `ToolMode` | `AIFunction` tools are offered to agy through a private endpoint (see "Tools"). Refused with `NotSupportedException` before anything runs: approval-required, declaration-only and hosted tools, `ToolMode` RequireAny and RequireSpecific, tools together with a JSON response format, and any tools while `IsolateAgyHome` does not apply; two tools with the same name raise `ArgumentException`. `ToolMode.None` runs a plain request. Silently dropping a tool would give wrong answers. |
 | `Temperature`, `TopP`, `TopK`, `Seed`, `FrequencyPenalty`, `PresencePenalty` | Ignored: agy has no such settings. |
 | `StopSequences`, `MaxOutputTokens` | Ignored: do not rely on them for limits or cost. |
 | `ConversationId`, `ContinuationToken`, `AllowBackgroundResponses` | Ignored: the client is stateless and sends the whole conversation every time. |

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.AI;
+
 namespace PinkRooster.Extensions.AI.Antigravity.Internal;
 
 /// <summary>The kind of answer the caller asked for.</summary>
@@ -33,4 +35,9 @@ internal sealed record ValidatedRequest(
     ResponseKind ResponseKind,
     string? SchemaText,
     string? SchemaName,
-    string? SchemaDescription);
+    string? SchemaDescription,
+    IReadOnlyList<AIFunction>? Tools = null)
+{
+    /// <summary>True when the request carries caller tools that agy may call through the bridge.</summary>
+    public bool HasTools => Tools is { Count: > 0 };
+}

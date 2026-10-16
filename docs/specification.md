@@ -20,7 +20,7 @@ Priorities: **Must** (v1 fails without it), **Should** (v1 ships without it only
 
 | # | Item | v1 behavior | Future-extension note |
 |---|---|---|---|
-| O-1 | Caller tool calling (`AIFunction`) | Rejected (FR-008) | Expose caller functions to agy through an MCP server, or a prompt-level call protocol; needs its own design. |
+| O-1 | Caller tool calling (`AIFunction`) | **Delivered 2026-10-16** for invocable `AIFunction`s with no approval, hidden from the response (`docs/tool-calling-mcp-bridge/spec.md`); approval-required tools, `RequireAny`/`RequireSpecific` and tools with a JSON format stay refused (FR-008) | Surfacing calls to the caller (surface-and-resume) or a schema-constrained loop, if callers need the standard flow. |
 | O-2 | Streaming of tool steps, thinking and JSON-format answers | Text of plain requests streams; JSON-format requests give one update (FR-019) | Surface tool steps as content; stream a schema answer only if agy adds partial structured output. |
 | O-3 | Multimodal input | Rejected (FR-007) | Place files in the per-request directory and reference them; verify model support first. |
 | O-4 | Embeddings | No `IEmbeddingGenerator` | Not possible with agy. |
@@ -104,7 +104,7 @@ Priorities: **Must** (v1 fails without it), **Should** (v1 ships without it only
 | FR-005 | A request counts as successful only if agy exits 0, the envelope status is `SUCCESS`, and no print-timeout notice was written. Any other combination ends in an exception (section 8). | Must |
 | FR-006 | The conversation is turned into one prompt in this order: preamble (FR-014), system text (system-role messages in order, then `ChatOptions.Instructions`), then user and assistant messages in their original order, each marked with its role. Every text part reaches agy unchanged and in order. | Must |
 | FR-007 | Content other than text is rejected with `NotSupportedException` before any process starts: `DataContent`, `UriContent`, and function call, function result and approval content. Reasoning content in history is dropped. | Must |
-| FR-008 | A non-empty `ChatOptions.Tools`, or a `ToolMode` other than null or none, is rejected with `NotSupportedException` before any process starts. | Must |
+| FR-008 | **Amended 2026-10-16:** invocable `AIFunction` tools with `ToolMode` null, auto or none are served through the tool bridge (`docs/tool-calling-mcp-bridge/spec.md`). These are rejected with `NotSupportedException` before any process starts: approval-required, declaration-only and hosted tools; `ToolMode` RequireAny and RequireSpecific; tools with a JSON response format; any tools while the agy home is not isolated. Duplicate tool names raise `ArgumentException`. | Must |
 | FR-009 | `ChatOptions.ModelId` selects the agy model; if null, `DefaultModelId` of the options is used; if both are null, agy's own default is used. | Must |
 | FR-010 | `ChatOptions.Reasoning.Effort` (else the `DefaultReasoningEffort` option) selects the agy effort level: `Low`→low, `Medium`→medium, `High`→high, `ExtraHigh`→xhigh, `None`→no level requested. It is applied only when the effective model is unset or its slug does not end in `-low`, `-medium`, `-high`, `-xhigh` or `-max` (agy rejects that combination, F-37); otherwise it is ignored and a debug entry names the option only. `Reasoning.Output` is ignored. The mapping is published in the README. | Should |
 | FR-011 | The options listed as "ignored" in section 4 cause no exception and no change to the agy command line. | Must |
@@ -156,7 +156,7 @@ Priorities: **Must** (v1 fails without it), **Should** (v1 ships without it only
 | `ResponseFormat` | `Text`: plain. `Json` without schema: answer must be valid JSON (SO-007). `ForJsonSchema`: section 5. | Scope of v1. |
 | `Instructions` | Honored as system text (FR-006). | Maps naturally. |
 | `Reasoning` | Honored when mappable (FR-010), otherwise ignored. | agy effort levels exist (F-02); shape known (F-42); conflict with level-qualified model slugs (F-37). |
-| `Tools` | Non-empty → `NotSupportedException` (FR-008). | Caller tools are out of v1 (O-1); silent dropping gives wrong answers. |
+| `Tools` | Invocable `AIFunction`s are served through the tool bridge; other cases → `NotSupportedException` (FR-008). | Silent dropping gives wrong answers. |
 | `ToolMode` | Other than null or none → `NotSupportedException`. | Same. |
 | `Temperature`, `TopP`, `TopK`, `Seed`, `FrequencyPenalty`, `PresencePenalty` | Ignored. | agy has no such flags (F-02); they only tune quality. |
 | `StopSequences`, `MaxOutputTokens` | Ignored. | No agy flag; the caller must not rely on them for limits or cost. Documented. |

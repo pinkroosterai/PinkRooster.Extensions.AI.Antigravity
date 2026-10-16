@@ -58,6 +58,12 @@ public sealed class AntigravityChatClientOptions
     public int MaxOutputBytes { get; set; } = 16 * 1024 * 1024;
 
     /// <summary>
+    /// The most tool calls agy may make in one request. Calls beyond it get an error result and agy decides what to do. Default 20;
+    /// at least 1. <c>FunctionInvokingChatClient</c> cannot limit these calls, because agy runs them itself.
+    /// </summary>
+    public int MaxToolCalls { get; set; } = 20;
+
+    /// <summary>
     /// When true, every request runs agy with its own throwaway home directory (the <c>HOME</c> variable) and sends the
     /// system text in an <c>AGENTS.md</c> file in the request directory. agy then sees none of the user's own agy rules,
     /// skills, settings or MCP servers, and nothing of the request stays in agy's history. Costs about 18 MB written per

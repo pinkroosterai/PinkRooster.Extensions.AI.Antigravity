@@ -17,6 +17,10 @@
 //   FAKE_AGY_READ_STDIN=1    read standard input to its end and write "stdin-length:N"
 //   FAKE_AGY_ECHO_CONTEXT=1  write a success envelope whose response lists HOME, whether it is a directory, the contents of
 //                            AGENTS.md in the working directory (or "<none>") and the received arguments
+//   FAKE_AGY_MCP_CALLS       lines of "tool|{json arguments}": act as agy toward the MCP server named in $HOME/.gemini/config/mcp_config.json
+//                            (agy's observed sequence), call each tool, and answer with a success envelope listing the results; when the
+//                            allow rule in $HOME/.gemini/antigravity-cli/settings.json is missing, answer as agy does without permission
+//   FAKE_AGY_MCP_HOLD_MS     after the MCP calls, wait this long before answering
 //   FAKE_AGY_WRITE_FILE=NAME create that file in the working directory
 //   FAKE_AGY_CHILD_SLEEP_MS  start a child that sleeps this long and shares the standard streams
 //   FAKE_AGY_CHILD_PIDFILE   file that receives the child's process id
@@ -124,6 +128,78 @@ if (Env("FAKE_AGY_ECHO_CONTEXT") == "1")
         "agents=" + (File.Exists(agentsPath) ? File.ReadAllText(agentsPath) : "<none>") + "\n" +
         "args=" + JsonSerializer.Serialize(args);
     Write(stdout, JsonSerializer.Serialize(new { status = "SUCCESS", response = context, conversation_id = "ctx-1" }));
+}
+
+if (Env("FAKE_AGY_MCP_CALLS") is { } mcpCalls)
+{
+    string home = Environment.GetEnvironmentVariable("HOME") ?? throw new InvalidOperationException("HOME is not set.");
+    using JsonDocument config = JsonDocument.Parse(File.ReadAllText(Path.Combine(home, ".gemini", "config", "mcp_config.json")));
+    JsonElement server = config.RootElement.GetProperty("mcpServers").GetProperty("agy-tools");
+    string url = server.GetProperty("serverUrl").GetString()!;
+    string authorization = server.GetProperty("headers").GetProperty("Authorization").GetString()!;
+
+    bool allowed = false;
+    string settingsPath = Path.Combine(home, ".gemini", "antigravity-cli", "settings.json");
+    if (File.Exists(settingsPath))
+    {
+        using JsonDocument settings = JsonDocument.Parse(File.ReadAllText(settingsPath));
+        allowed = settings.RootElement.TryGetProperty("permissions", out JsonElement permissions)
+            && permissions.TryGetProperty("allow", out JsonElement allow)
+            && allow.EnumerateArray().Any(e => e.GetString() == "mcp(agy-tools/*)");
+    }
+
+    using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+    int rpcId = 0;
+    async Task<string> Post(string method, string paramsJson, bool auth = true)
+    {
+        string body = "{\"jsonrpc\":\"2.0\",\"id\":" + (++rpcId) + ",\"method\":\"" + method + "\",\"params\":" + paramsJson + "}";
+        using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = new StringContent(body, utf8, "application/json") };
+        request.Headers.TryAddWithoutValidation("Accept", "application/json, text/event-stream");
+        if (auth)
+        {
+            request.Headers.TryAddWithoutValidation("Authorization", authorization);
+        }
+
+        using HttpResponseMessage response = await http.SendAsync(request);
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    await Post("server/discover", "{}"); // answered 404; agy then falls back
+    await Post("initialize", "{\"protocolVersion\":\"2025-11-25\"}");
+    using (var get = new HttpRequestMessage(HttpMethod.Get, url))
+    {
+        get.Headers.TryAddWithoutValidation("Accept", "text/event-stream");
+        get.Headers.TryAddWithoutValidation("Authorization", authorization);
+        using HttpResponseMessage ignored = await http.SendAsync(get);
+    }
+
+    string origin = new Uri(url).GetLeftPart(UriPartial.Authority);
+    using (HttpResponseMessage wellKnown = await http.GetAsync(origin + "/.well-known/oauth-protected-resource/mcp"))
+    {
+    }
+
+    await Post("tools/list", "{}");
+
+    var results = new List<string>();
+    if (allowed)
+    {
+        foreach (string line in mcpCalls.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            int bar = line.IndexOf('|');
+            string reply = await Post("tools/call", "{\"name\":\"" + line[..bar] + "\",\"arguments\":" + line[(bar + 1)..] + "}");
+            using JsonDocument parsed = JsonDocument.Parse(reply);
+            results.Add(parsed.RootElement.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString() ?? string.Empty);
+        }
+    }
+
+    if (int.TryParse(Env("FAKE_AGY_MCP_HOLD_MS"), out int hold))
+    {
+        await Task.Delay(hold);
+    }
+
+    Write(stdout, allowed
+        ? JsonSerializer.Serialize(new { status = "SUCCESS", response = "tools: " + string.Join(" | ", results), conversation_id = "mcp-1" })
+        : "{\"status\":\"SUCCESS\",\"response\":\"\",\"conversation_id\":\"mcp-1\",\"denied_actions\":[{\"action\":\"mcp\",\"display_name\":\"CallMcpTool\"}]}");
 }
 
 if (Env("FAKE_AGY_ECHO_ENV") is { } variable)

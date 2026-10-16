@@ -88,3 +88,11 @@ Decision: the library's redirect wins, and a caller who wants to control the hom
 ## AGENTS.md size (2026-10-16, phase 1)
 
 agy truncates a single rule file above 24,000 bytes ([rules docs](https://antigravity.google/docs/rules/), no page date, checked 2026-10-16; the page measures after `@[label](path)` includes expand, which the library never writes). The library measures the UTF-8 byte count of the whole `AGENTS.md` content it writes (preamble, system texts, and in phase 2 the tool instruction) against 24,000 and refuses with `AntigravityPromptTooLargeException` before any process starts. Bytes, not characters, because the docs say bytes. The `MaxPromptLength` character limit keeps applying to the prompt only.
+
+## Floor types (2026-10-16, phase 2)
+
+In the doc file of `Microsoft.Extensions.AI.Abstractions` 10.3.0 (`~/.nuget/packages/microsoft.extensions.ai.abstractions/10.3.0/lib/net10.0/*.xml`) these exist: `ApprovalRequiredAIFunction`, `AIFunctionDeclaration` and its `JsonSchema` property, `HostedMcpServerTool`, `AIFunction.InvokeAsync`, `AIFunctionArguments`, `FunctionCallContent.InformationalOnly`, `ChatFinishReason.ToolCalls`. So the refusals in the spec can be detected by type and the arguments validated against `AIFunctionDeclaration.JsonSchema` at the floor. Checked by searching the XML doc file; the code compiles against the same package, which is the final check. This also closes the unknown "M9" of the first options document for these members.
+
+## Bridge listener (2026-10-16, phase 2)
+
+Decision: a `TcpListener` on `127.0.0.1` with port 0 and a minimal HTTP/1.1 reader and writer written for this bridge (request line, headers, `Content-Length` and chunked request bodies, keep-alive, JSON responses), not `HttpListener`. Why: `HttpListener` cannot bind port 0 (it would need a probe-then-bind that races), and Windows URL reservation rules are unverified; `TcpListener` has neither problem and the observed agy traffic needs very little HTTP (`research.md § HTTP bridge run`). The bridge accepts only `Host` values naming the loopback address and its own port, and treats any `Origin` other than those as foreign. Tested with the BCL `HttpClient` against the bridge, so the HTTP subset is exercised by a standard client as well as by the fake agy.

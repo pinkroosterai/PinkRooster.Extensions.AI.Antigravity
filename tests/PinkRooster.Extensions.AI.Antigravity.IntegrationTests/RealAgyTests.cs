@@ -193,6 +193,27 @@ public sealed class RealAgyTests : IDisposable
     }
 
     [IntegrationFact]
+    public async Task A_real_agy_calls_a_caller_tool_through_the_bridge_without_skip_permissions()
+    {
+        int runs = 0;
+        AIFunction code = AIFunctionFactory.Create((string person) =>
+        {
+            Interlocked.Increment(ref runs);
+            return "ZEBRA-4417 for " + person;
+        }, "get_secret_code", "Returns the secret code of the day for a person.");
+        using AntigravityChatClient client = Client(o => o.IsolateAgyHome = true);
+
+        ChatResponse response = await client.GetResponseAsync(
+            "Call the get_secret_code tool for the person Ada and tell me exactly what it returned.",
+            new ChatOptions { Tools = [code] });
+
+        Describe(response);
+        _output.WriteLine($"tool body ran {runs} time(s)");
+        Assert.True(runs >= 1, "agy never called the tool (a denied permission shows as an AntigravityRunException or an empty answer)");
+        Assert.Contains("ZEBRA-4417", response.Text);
+    }
+
+    [IntegrationFact]
     public async Task Isolated_home_keeps_sign_in_and_follows_an_agents_md_rule()
     {
         using AntigravityChatClient client = Client(o => o.IsolateAgyHome = true);

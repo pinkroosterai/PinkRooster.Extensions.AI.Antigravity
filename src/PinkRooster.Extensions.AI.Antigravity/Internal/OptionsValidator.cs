@@ -41,6 +41,11 @@ internal static class OptionsValidator
             throw new ArgumentException("MaxOutputBytes must be at least 1.", nameof(options));
         }
 
+        if (options.MaxToolCalls < 1)
+        {
+            throw new ArgumentException("MaxToolCalls must be at least 1.", nameof(options));
+        }
+
         if (string.IsNullOrWhiteSpace(options.SystemPreamble))
         {
             throw new ArgumentException("SystemPreamble must not be empty.", nameof(options));

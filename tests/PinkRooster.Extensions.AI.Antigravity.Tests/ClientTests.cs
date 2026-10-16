@@ -274,11 +274,11 @@ public sealed class ClientTests : IDisposable
     // Refused before anything runs
 
     [Fact]
-    public async Task Tools_are_refused_before_any_process_starts()
+    public async Task Unsupported_tool_requests_are_refused_before_any_process_starts()
     {
         FakeProcessRunner runner = Clients.Runner();
         using AntigravityChatClient client = Clients.Create(runner);
-        var options = new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "one")] };
+        var options = new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "one")], ToolMode = ChatToolMode.RequireAny };
 
         await Assert.ThrowsAsync<NotSupportedException>(() => client.GetResponseAsync(Clients.User(), options));
 

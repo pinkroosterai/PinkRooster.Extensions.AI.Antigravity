@@ -29,6 +29,11 @@ try
         }
     }
 
+    // A tool: agy calls it while it works (Linux, IsolateAgyHome). The call is not returned to you, only the answer is.
+    var options = new ChatOptions { Tools = [AIFunctionFactory.Create((string city) => $"Forecast for {city}: light rain.", "forecast")] };
+    ChatResponse withTool = await client.GetResponseAsync("Will it rain in Utrecht? Use the forecast tool.", options);
+    Console.WriteLine($"With a tool: {withTool.Text}");
+
     // A typed answer constrained by a JSON schema.
     ChatResponse<Capital> typed = await client.GetResponseAsync<Capital>("What is the capital of France?");
     Console.WriteLine($"Typed: {typed.Result.City} ({typed.Result.Country})");

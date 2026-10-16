@@ -10,18 +10,7 @@ internal static class RequestValidator
     {
         ArgumentNullException.ThrowIfNull(messages);
 
-        if (options is not null)
-        {
-            if (options.Tools is { Count: > 0 })
-            {
-                throw new NotSupportedException("ChatOptions.Tools is not supported: the caller's tools are not forwarded to agy.");
-            }
-
-            if (options.ToolMode is not null && !options.ToolMode.Equals(ChatToolMode.None))
-            {
-                throw new NotSupportedException("ChatOptions.ToolMode is not supported: the caller's tools are not forwarded to agy.");
-            }
-        }
+        IReadOnlyList<AIFunction> tools = ValidateTools(options);
 
         var systemTexts = new List<string>();
         var turns = new List<PromptTurn>();
@@ -113,8 +102,64 @@ internal static class RequestValidator
             }
         }
 
-        return new ValidatedRequest(systemTexts, turns, kind, schemaText, schemaName, schemaDescription);
+        if (tools.Count > 0 && kind != ResponseKind.Text)
+        {
+            throw new NotSupportedException(
+                "Tools cannot be combined with a JSON response format: agy applies a schema to its final result only, so this combination is not supported.");
+        }
+
+        return new ValidatedRequest(systemTexts, turns, kind, schemaText, schemaName, schemaDescription, tools);
     }
+
+    // ApprovalRequiredAIFunction is experimental (MEAI001) in Microsoft.Extensions.AI.Abstractions; it is only type-tested here, to refuse it.
+#pragma warning disable MEAI001
+    // Tools reach agy only through the bridge, which runs invocable functions. Everything the bridge cannot honour is refused
+    // before any process starts, because dropping it silently would give wrong answers.
+    private static IReadOnlyList<AIFunction> ValidateTools(ChatOptions? options)
+    {
+        if (options is null)
+        {
+            return [];
+        }
+
+        ChatToolMode? mode = options.ToolMode;
+        if (mode is not null && mode is not AutoChatToolMode && !mode.Equals(ChatToolMode.None))
+        {
+            throw new NotSupportedException(
+                "ChatOptions.ToolMode RequireAny and RequireSpecific are not supported: agy decides itself whether to call a tool.");
+        }
+
+        if (options.Tools is not { Count: > 0 } || mode is not null && mode.Equals(ChatToolMode.None))
+        {
+            return []; // no tools, or the caller asked for none: the request runs as a plain request
+        }
+
+        var functions = new List<AIFunction>(options.Tools.Count);
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (AITool tool in options.Tools)
+        {
+            if (tool is ApprovalRequiredAIFunction)
+            {
+                throw new NotSupportedException("Tools that require approval are not supported: agy runs the tool loop, so the library cannot ask the caller first.");
+            }
+
+            if (tool is not AIFunction function)
+            {
+                throw new NotSupportedException(
+                    $"A tool of type {tool.GetType().Name} is not supported: only invocable AIFunction tools can be offered to agy.");
+            }
+
+            if (!names.Add(function.Name))
+            {
+                throw new ArgumentException($"Two tools are named '{function.Name}': tool names must be unique.", nameof(options));
+            }
+
+            functions.Add(function);
+        }
+
+        return functions;
+    }
+#pragma warning restore MEAI001
 
     private static bool IsObjectSchema(JsonElement schema)
     {

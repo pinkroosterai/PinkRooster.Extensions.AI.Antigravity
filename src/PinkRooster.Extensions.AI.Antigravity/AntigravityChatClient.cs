@@ -95,6 +95,9 @@ public sealed class AntigravityChatClient : IChatClient
                 directory.WriteAgentsFile(prepared.AgentsFile);
             }
 
+            using var bridgeStop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            await using ToolBridge? bridge = await StartBridgeAsync(request, directory, bridgeStop).ConfigureAwait(false);
+
             string? schemaFile = request.ResponseKind == ResponseKind.JsonSchema ? directory.WriteSchemaFile(request.SchemaText!) : null;
             AgyInvocation invocation = InvocationBuilder.Build(
                 prompt,
@@ -182,6 +185,9 @@ public sealed class AntigravityChatClient : IChatClient
             {
                 directory.WriteAgentsFile(prepared.AgentsFile);
             }
+
+            using var bridgeStop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            await using ToolBridge? bridge = await StartBridgeAsync(prepared.Request, directory, bridgeStop).ConfigureAwait(false);
 
             AgyInvocation invocation = InvocationBuilder.Build(
                 prepared.Prompt,
@@ -360,6 +366,34 @@ public sealed class AntigravityChatClient : IChatClient
         return ex;
     }
 
+    // Starts the tool endpoint for a request with tools and tells agy about it through the request's own home. Null without tools.
+    private async Task<ToolBridge?> StartBridgeAsync(ValidatedRequest request, RequestDirectory directory, CancellationTokenSource stop)
+    {
+        if (!request.HasTools)
+        {
+            return null;
+        }
+
+        var server = new McpToolServer(
+            request.Tools!,
+            _options.MaxToolCalls,
+            _schemaValidator,
+            (name, elapsedMs, failed) => LogMessages.ToolCallFinished(_logger, name, elapsedMs, failed),
+            stop.Token);
+        ToolBridge bridge = ToolBridge.Start(server, stop);
+        try
+        {
+            AgyHomeFiles.WriteBridge(directory.HomePath!, bridge.Url, bridge.Token);
+        }
+        catch
+        {
+            await bridge.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+
+        return bridge;
+    }
+
     private sealed record Prepared(
         ValidatedRequest Request,
         ICompiledSchema? Schema,
@@ -380,6 +414,12 @@ public sealed class AntigravityChatClient : IChatClient
 
         // An unusable schema must fail here, before agy is run and paid for.
         ICompiledSchema? schema = request.ResponseKind == ResponseKind.JsonSchema ? _schemaValidator.Compile(request.SchemaText!) : null;
+
+        if (request.HasTools && !_isolateHome)
+        {
+            throw new NotSupportedException(
+                "Tools need an isolated agy home (IsolateAgyHome, on Linux): without one the library cannot give agy a private tool endpoint.");
+        }
 
         // With an isolated home the system text travels in AGENTS.md (refused when agy would truncate it); otherwise in the prompt.
         string? agentsFile = null;
@@ -451,5 +491,6 @@ public sealed class AntigravityChatClient : IChatClient
             SystemPreamble = source.SystemPreamble,
             MaxOutputBytes = source.MaxOutputBytes,
             IsolateAgyHome = source.IsolateAgyHome,
+            MaxToolCalls = source.MaxToolCalls,
         };
 }

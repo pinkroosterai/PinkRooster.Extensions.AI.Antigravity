@@ -126,7 +126,7 @@ public class LoggingTests
     {
         var logger = new CapturingLogger();
         using AntigravityChatClient client = Client(Clients.Runner(), logger);
-        var options = new ChatOptions { Tools = [AIFunctionFactory.Create(() => SecretSchema, "secret_tool")] };
+        var options = new ChatOptions { Tools = [AIFunctionFactory.Create(() => SecretSchema, "secret_tool")], ToolMode = ChatToolMode.RequireAny };
 
         await Assert.ThrowsAsync<NotSupportedException>(() => client.GetResponseAsync(Clients.User(SecretPrompt), options));
 

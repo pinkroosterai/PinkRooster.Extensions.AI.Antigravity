@@ -72,12 +72,14 @@ public class RequestValidatorTests
     }
 
     [Fact]
-    public void Non_empty_tools_are_rejected()
+    public void Invocable_tools_are_accepted_and_kept_in_order()
     {
-        var options = new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "one")] };
+        var options = new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "one"), AIFunctionFactory.Create(() => 2, "two")] };
 
-        var ex = Assert.Throws<NotSupportedException>(() => RequestValidator.Validate(OneUserMessage(), options));
-        Assert.Contains("Tools", ex.Message);
+        ValidatedRequest request = RequestValidator.Validate(OneUserMessage(), options);
+
+        Assert.True(request.HasTools);
+        Assert.Equal(["one", "two"], request.Tools!.Select(t => t.Name));
     }
 
     [Fact]
@@ -95,8 +97,8 @@ public class RequestValidatorTests
 
     public static IEnumerable<object[]> RejectedToolModes()
     {
-        yield return [ChatToolMode.Auto];
         yield return [ChatToolMode.RequireAny];
+        yield return [ChatToolMode.RequireSpecific("one")];
     }
 
     [Fact]
