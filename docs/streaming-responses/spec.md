@@ -1,9 +1,9 @@
 # Spec: Real streaming responses
 
 **In one sentence** — `GetStreamingResponseAsync` yields the answer's text as agy produces it, instead of one update after the run ends, for developers using `AntigravityChatClient` as an `IChatClient`.
-**Status** — shaping
+**Status** — buildable
 **Coverage** — 8/9 clear · 1 partial · 0 missing
-**Confirmed** — 0/14 decisions · 8 assumed, unconfirmed
+**Confirmed** — 15/15 decisions · 0 assumed, unconfirmed
 **Research** — `research.md`
 
 ## Outcome
@@ -94,25 +94,29 @@ States of a streaming request: not started → running (events arriving) → fin
 
 ## Decisions
 
+### 2026-10-16 (readback)
+
+- `user` Q: close the timeout/denied-action stream gap with a third paid run, or leave it to the plan? → A: "Leave it to the plan, stop here (Recommended)" — ruled out: a third capture before planning; the plan's first task settles the timeout and `denied_actions` shape. confirmed 2026-10-16
+
 ### 2026-10-16 (capture)
 
-- `sourced` **How it works** — `text_delta` is incremental; `result` has `status`, `response`, `usage`, no model; model is in `init` — `research.md § Captured stream-json shape`. Joining the deltas of both captures equals `result.response`.
-- `sourced` **How it works** — steps without `text_delta` yield nothing — `research.md § Captured stream-json shape`.
+- `sourced` **How it works** — `text_delta` is incremental; `result` has `status`, `response`, `usage`, no model; model is in `init` — `research.md § Captured stream-json shape`. Joining the deltas of both captures equals `result.response`. confirmed 2026-10-16
+- `sourced` **How it works** — steps without `text_delta` yield nothing — `research.md § Captured stream-json shape`. confirmed 2026-10-16
 
 ### 2026-10-16
 
-- `user` Q: which agent text is streamed when agy talks, runs tools, then talks again? → A: "All agent_response steps (Recommended)" — ruled out: streaming only the final step; streamed text always equalling `GetResponseAsync` text.
-- `user` Q: do the stream-json capture before planning? → A: "Yes, I run the capture first (Recommended)" — ruled out: planning on the documented shape alone.
-- `user` Q: appetite? → A: "One small phase (Recommended)" — ruled out: a second phase, tool steps as content.
-- `user` Q: library delay figure? → A: "Pass-through, no figure (Recommended)" — ruled out: a millisecond limit and a timing test.
-- `assumed` **How it works** — no separator is inserted between the text of consecutive answer steps; text is concatenated as emitted — ruled out: inserting a blank line or newline between steps.
+- `user` Q: which agent text is streamed when agy talks, runs tools, then talks again? → A: "All agent_response steps (Recommended)" — ruled out: streaming only the final step; streamed text always equalling `GetResponseAsync` text. confirmed 2026-10-16
+- `user` Q: do the stream-json capture before planning? → A: "Yes, I run the capture first (Recommended)" — ruled out: planning on the documented shape alone. confirmed 2026-10-16
+- `user` Q: appetite? → A: "One small phase (Recommended)" — ruled out: a second phase, tool steps as content. confirmed 2026-10-16
+- `user` Q: library delay figure? → A: "Pass-through, no figure (Recommended)" — ruled out: a millisecond limit and a timing test. confirmed 2026-10-16
+- `assumed` **How it works** — no separator is inserted between the text of consecutive answer steps; text is concatenated as emitted — ruled out: inserting a blank line or newline between steps. confirmed 2026-10-16
 
 ### 2026-10-16 (draft)
 
-- `assumed` **How it works** — streaming requests use `--output-format stream-json`; non-streaming requests stay on `json` — ruled out: switching `GetResponseAsync` to stream-json, a streaming flag in options.
-- `assumed` **Scope** — JSON-schema streaming requests keep today's single-update behavior — ruled out: streaming schema text; per `agy --help` 1.4.0 the schema applies to the final result only (`research.md`).
-- `assumed` **Edge cases** — a failure after text was yielded is thrown on the next `MoveNextAsync`, earlier updates stand, no retry — ruled out: retracting text, silent truncation, retry.
-- `assumed` **How it works** — the `result` event goes through the existing `ErrorClassifier` rules — ruled out: a second classifier for streams.
-- `assumed` **Edge cases** — stopping the enumeration ends the agy process tree — ruled out: letting agy finish in the background.
-- `assumed` **Scope** — no new public options; `Timeout`, `MaxOutputBytes`, `MaxConcurrency` apply as they do now — ruled out: a separate streaming timeout or buffer option.
-- `assumed` **How it works** — only the last update carries usage and metadata; text updates carry `TextContent` and `ResponseId` — ruled out: usage on every update, cumulative text per update.
+- `assumed` **How it works** — streaming requests use `--output-format stream-json`; non-streaming requests stay on `json` — ruled out: switching `GetResponseAsync` to stream-json, a streaming flag in options. confirmed 2026-10-16
+- `assumed` **Scope** — JSON-schema streaming requests keep today's single-update behavior — ruled out: streaming schema text; per `agy --help` 1.4.0 the schema applies to the final result only (`research.md`). confirmed 2026-10-16
+- `assumed` **Edge cases** — a failure after text was yielded is thrown on the next `MoveNextAsync`, earlier updates stand, no retry — ruled out: retracting text, silent truncation, retry. confirmed 2026-10-16
+- `assumed` **How it works** — the `result` event goes through the existing `ErrorClassifier` rules — ruled out: a second classifier for streams. confirmed 2026-10-16
+- `assumed` **Edge cases** — stopping the enumeration ends the agy process tree — ruled out: letting agy finish in the background. confirmed 2026-10-16
+- `assumed` **Scope** — no new public options; `Timeout`, `MaxOutputBytes`, `MaxConcurrency` apply as they do now — ruled out: a separate streaming timeout or buffer option. confirmed 2026-10-16
+- `assumed` **How it works** — only the last update carries usage and metadata; text updates carry `TextContent` and `ResponseId` — ruled out: usage on every update, cumulative text per update. confirmed 2026-10-16
