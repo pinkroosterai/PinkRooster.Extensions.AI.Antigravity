@@ -28,6 +28,7 @@ public sealed class AntigravityChatClient : IChatClient
     private readonly SemaphoreSlim _slots;
     private readonly PromptLimits _limits;
     private readonly ChatClientMetadata _metadata;
+    private readonly ISchemaValidator _schemaValidator;
     private int _disposed;
     private int _newerVersionLogged;
 
@@ -44,7 +45,8 @@ public sealed class AntigravityChatClient : IChatClient
         AntigravityChatClientOptions? options,
         ILogger? logger,
         IAgyProcessRunner runner,
-        Func<string?, string>? resolvePath)
+        Func<string?, string>? resolvePath,
+        ISchemaValidator? schemaValidator = null)
     {
         options ??= new AntigravityChatClientOptions();
         OptionsValidator.Validate(options);
@@ -52,6 +54,7 @@ public sealed class AntigravityChatClient : IChatClient
         _options = Copy(options);
         _logger = logger ?? NullLogger.Instance;
         _runner = runner;
+        _schemaValidator = schemaValidator ?? SchemaValidator.Instance;
         _versionChecker = new AgyVersionChecker(runner, _options, resolvePath);
         _slots = new SemaphoreSlim(_options.MaxConcurrency, _options.MaxConcurrency);
         _limits = PromptLimits.ForCurrentPlatform(_options.MaxPromptLength);
@@ -69,11 +72,9 @@ public sealed class AntigravityChatClient : IChatClient
         cancellationToken.ThrowIfCancellationRequested();
 
         ValidatedRequest request = RequestValidator.Validate(messages, options);
-        if (request.ResponseKind != ResponseKind.Text)
-        {
-            // Plan phase 5 adds structured output; until then the request is refused before anything runs.
-            throw new NotSupportedException("Structured output (JSON formats) is not implemented yet.");
-        }
+
+        // An unusable schema must fail here, before agy is run and paid for.
+        ICompiledSchema? schema = request.ResponseKind == ResponseKind.JsonSchema ? _schemaValidator.Compile(request.SchemaText!) : null;
 
         string prompt = PromptBuilder.Build(request, _options.SystemPreamble, PromptBuilder.NewNonce(), _limits);
 
@@ -100,8 +101,9 @@ public sealed class AntigravityChatClient : IChatClient
                 _options.TemporaryDirectoryRoot,
                 (path, _) => LogMessages.RequestDirectoryNotDeleted(_logger, path));
 
+            string? schemaFile = request.ResponseKind == ResponseKind.JsonSchema ? directory.WriteSchemaFile(request.SchemaText!) : null;
             AgyInvocation invocation = InvocationBuilder.Build(
-                prompt, modelId, effort, schemaFilePath: null, _options.Timeout, _options.AdditionalArguments, _options.EnvironmentVariables);
+                prompt, modelId, effort, schemaFile, _options.Timeout, _options.AdditionalArguments, _options.EnvironmentVariables);
             if (invocation.EffortRequested && !invocation.EffortApplied)
             {
                 LogMessages.EffortNotApplied(_logger, modelId);
@@ -123,7 +125,14 @@ public sealed class AntigravityChatClient : IChatClient
                 LogMessages.DeniedActionsWithAnswer(_logger, string.Join(", ", envelope.DeniedActionKinds));
             }
 
-            ChatResponse response = ResponseMapper.Map(envelope, ResponseMapper.PlainText(envelope), modelId, DateTimeOffset.UtcNow);
+            string text = request.ResponseKind switch
+            {
+                ResponseKind.JsonSchema => StructuredResultChecker.CheckSchemaResult(envelope, schema!),
+                ResponseKind.Json => StructuredResultChecker.CheckPlainJson(ResponseMapper.PlainText(envelope)),
+                _ => ResponseMapper.PlainText(envelope),
+            };
+
+            ChatResponse response = ResponseMapper.Map(envelope, text, modelId, DateTimeOffset.UtcNow);
             LogMessages.RequestCompleted(
                 _logger, modelId, watch.ElapsedMilliseconds, prompt.Length, envelope.Usage?.InputTokens, envelope.Usage?.OutputTokens);
             return response;
