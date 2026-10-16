@@ -45,3 +45,13 @@ Read from the repo (nothing external; all unknowns were internal or already capt
 - **Classifier input.** `ErrorClassifier.Classify` takes an `AgyProcessResult` and parses stdout as one envelope; its timeout rule also reads stderr for agy's own notice. The stream's `result` event has the envelope's fields (`capture/`) but is wrapped under `result`.
 - **FakeAgy** writes all output at once, then sleeps (`tools/FakeAgy/Program.cs`); it cannot emit timed lines yet, which the first-update-before-exit test needs.
 - **Docs that state "one update":** `README.md` line ~138 and ~178, `docs/specification.md` (O-2, FR-019, EC-34), `docs/software-design.md` (§4.3, DL-18, FR-019 rows), `docs/deferred.md` row 2.
+
+## Stream failure shapes
+
+Answered without a paid run, from public sources (owner declined the capture, 2026-10-16). Label: **reported**, not seen on this machine.
+
+- **Timeout**: agy writes `[agy] print timeout after <N>s with turn in progress; returning partial output` to **stderr**, exits 0, and the terminal `result` event says `SUCCESS` — also in `stream-json` mode (reported for an 18-minute run). So the existing classifier rule that looks for `print timeout after` in stderr applies unchanged to streams; status and exit code cannot tell it apart. Source: [agy issue #1012](https://github.com/google-antigravity/antigravity-cli/issues/1012), checked 2026-10-16.
+- **Denied action**: soft-denied, run continues, exit 0, a notice on stderr; `denied_actions` appears in the result. A third-party driver reports `result.denied_actions` is cumulative and deduped. No stream event is documented for denials. Sources: [headless docs](https://antigravity.google/docs/cli/headless/), [vicoa PR #74](https://github.com/vicoa-ai/vicoa/pull/74), checked 2026-10-16 (the PR via search summary only, not opened).
+- **Status ERROR**: in `stream-json` the error is in the terminal `result` event's `status` and `error` fields, on stdout. Source: headless docs, checked 2026-10-16.
+- **Exit codes** (docs): 0 success, clean close or tool denial; 1 invalid JSON line, unknown `--model`; 2 control events or CLI-handled slash commands. A fatal model/API error is reported as an `AGY_ERROR` line on stderr with exit 3 (search summary of a third-party driver; not verified).
+- **Not found anywhere**: a stream event of its own for timeouts or denials. The plan treats the stderr notice as the only signal, same as the buffered path.

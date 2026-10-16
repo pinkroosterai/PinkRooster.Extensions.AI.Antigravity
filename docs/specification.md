@@ -21,7 +21,7 @@ Priorities: **Must** (v1 fails without it), **Should** (v1 ships without it only
 | # | Item | v1 behavior | Future-extension note |
 |---|---|---|---|
 | O-1 | Caller tool calling (`AIFunction`) | Rejected (FR-008) | Expose caller functions to agy through an MCP server, or a prompt-level call protocol; needs its own design. |
-| O-2 | Real streaming | One update with the full answer (FR-019) | Map agy's `stream-json` text deltas to `ChatResponseUpdate`. |
+| O-2 | Streaming of tool steps, thinking and JSON-format answers | Text of plain requests streams; JSON-format requests give one update (FR-019) | Surface tool steps as content; stream a schema answer only if agy adds partial structured output. |
 | O-3 | Multimodal input | Rejected (FR-007) | Place files in the per-request directory and reference them; verify model support first. |
 | O-4 | Embeddings | No `IEmbeddingGenerator` | Not possible with agy. |
 | O-5 | Session reuse | Stateless; history resent each call | Map `ConversationId` to agy's conversation resume with a stable directory. |
@@ -115,7 +115,7 @@ Priorities: **Must** (v1 fails without it), **Should** (v1 ships without it only
 | FR-016 | The response has `ResponseId` = agy conversation id, `ModelId` = requested model else default else null, `CreatedAt` = completion time, `FinishReason` = `Stop`. | Must |
 | FR-017 | `RawRepresentation` is the parsed envelope. `AdditionalProperties` carries the keys `agy.num_turns`, `agy.duration_seconds` and, when present, `agy.denied_actions`. The raw stdout is not retained. | Must |
 | FR-018 | `GetService(typeof(ChatClientMetadata))` with a null key returns metadata with provider name `antigravity` and the default model id; `GetService(typeof(AntigravityChatClient))` returns the client; any other type or a non-null key returns null. | Must |
-| FR-019 | `GetStreamingResponseAsync` yields exactly one `ChatResponseUpdate` containing the full text, usage and the same identifiers as the non-streaming result. Errors surface on the first `MoveNextAsync`. | Must |
+| FR-019 | `GetStreamingResponseAsync` for a plain-text request yields text updates as agy produces them (agy `stream-json` output), then a final update with usage and the same identifiers as the non-streaming result; joined text equals the `GetResponseAsync` text when agy ran no tools. A JSON-format request (plain or schema) yields exactly one update. Errors surface on a `MoveNextAsync` call (the first when nothing was yielded). Spec: `docs/streaming-responses/spec.md`. | Must |
 | FR-020 | After `Dispose`, any member except `Dispose` throws `ObjectDisposedException`; `Dispose` may be called repeatedly. | Must |
 | FR-021 | The agy executable is found from the `ExecutablePath` option; if null, from the system search path, then the default install directory of the platform. If not found, `AntigravityNotFoundException` is thrown before any request process starts. | Must |
 | FR-022 | The agy version is read once per client instance. A version below 1.3.5 raises `AntigravityVersionException`. A newer version is accepted. The check can be skipped by option. The version check never calls a model. | Must |
@@ -143,7 +143,7 @@ Priorities: **Must** (v1 fails without it), **Should** (v1 ships without it only
 | Member | Behavior | Reason |
 |---|---|---|
 | `GetResponseAsync(messages, options, ct)` | Supported: FR-002 to FR-009, FR-012 to FR-017, FR-021 to FR-027. Throws `ArgumentNullException` for null `messages`. `options` null = defaults. The caller's `ChatOptions` instance is not modified. | Core |
-| `GetStreamingResponseAsync(messages, options, ct)` | Supported as one update (FR-019). | Streaming is out of v1 (O-2). |
+| `GetStreamingResponseAsync(messages, options, ct)` | Supported: incremental text for plain requests, one update for JSON-format requests (FR-019). | Streaming of tool steps is out (O-2). |
 | `GetService(Type, object?)` | FR-018. | Convention for metadata discovery. |
 | `Dispose()` | FR-020. No agy process outlives a request, so nothing else is released. | One process per request. |
 | `GetResponseAsync<T>` (extension, consumer side) | Works through `ResponseFormat` (section 5). The library does not reference the package that defines it. | F-28 |
@@ -250,7 +250,7 @@ Priorities: **Must** (v1 fails without it), **Should** (v1 ships without it only
 | EC-31 | Invalid options (negative timeout, concurrency below 1, forbidden extra argument) | `ArgumentException` at construction. |
 | EC-32 | Non-UTF-8 bytes in agy output | Invalid sequences replaced; request does not fail on that alone. |
 | EC-33 | Agy newer than newest tested | Accepted; one information log (NFR-012). |
-| EC-34 | Streaming call that fails | Exception thrown on first `MoveNextAsync`. |
+| EC-34 | Streaming call that fails | Exception thrown on first `MoveNextAsync` when nothing was yielded, otherwise on the next one; text already yielded stands. |
 
 ## 9. Public API surface (outline)
 

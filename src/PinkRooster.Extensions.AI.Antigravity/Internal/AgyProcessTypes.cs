@@ -8,6 +8,16 @@ internal interface IAgyProcessRunner
     /// <see cref="OperationCanceledException"/> after the process tree has been ended.
     /// </summary>
     Task<AgyProcessResult> RunAsync(AgyProcessRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Runs the process like <see cref="RunAsync"/> but hands each line of standard output to <paramref name="onStandardOutputLine"/>
+    /// as it is read, from a reader thread, and does not keep standard output: <see cref="AgyProcessResult.StandardOutput"/> is empty.
+    /// The line count toward <see cref="AgyProcessRequest.MaxOutputBytes"/> like buffered output does.
+    /// </summary>
+    Task<AgyProcessResult> RunStreamingAsync(
+        AgyProcessRequest request,
+        Action<string> onStandardOutputLine,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>What to start.</summary>

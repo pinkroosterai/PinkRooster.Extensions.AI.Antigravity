@@ -369,7 +369,7 @@ Environment: the host environment plus `EnvironmentVariables` (a null value remo
 
 API member names used here (`ChatFinishReason.Stop`, `UsageContent`, `ChatResponseUpdate.Contents`) are from my knowledge of Abstractions 10.x and were not read this session (unverified); M4 checks them against the package before the mapper is written.
 
-Streaming (FR-019): the same `ChatResponse` becomes one `ChatResponseUpdate` (`Contents` from the message, plus a `UsageContent`, `ResponseId`, `ModelId`, `CreatedAt`, `FinishReason`). The request runs inside the async iterator, so every exception appears on the first `MoveNextAsync` (EC-34).
+Streaming (FR-019): a plain-text request runs with `--output-format stream-json`; `AgyProcessRunner.RunStreamingAsync` hands stdout lines to the client through a channel, `StreamEventReader` turns each into text, model or result, and each text piece becomes a `ChatResponseUpdate` (the trailing line terminator is withheld by `TrailingTerminatorHold` so the joined text equals `ResponseMapper.PlainText`). The `result` event's object goes through `ErrorClassifier` like an envelope and supplies the final update (`UsageContent`, `ResponseId`, `ModelId`, `CreatedAt`, `FinishReason`, no text). `Json` and schema requests take the buffered path and yield one update. The request runs inside the async iterator; leaving it early cancels the run and ends the process tree (EC-34). Full spec: `docs/streaming-responses/spec.md`.
 
 ### 4.4 Errors to exceptions (FR-005, 023, 026, 027, 030, 033, SO-003, 004, 006)
 
@@ -737,7 +737,7 @@ Each milestone is one or a few commits (one logical change per commit, conventio
 | DL-15 | Preserve the host environment, apply overrides | Scrub the environment | agy needs its sign-in variables (`AGY_ADC_AUTH`, `GEMINI_API_KEY`, F-20); scrubbing would break them. |
 | DL-16 | Request directory deletion errors are logged, not thrown | Throw | The answer is already obtained; throwing would discard a paid result. Recorded as R-9 against NFR-001. |
 | DL-17 | xUnit with plain asserts | FluentAssertions; Shouldly; NUnit | Avoids licence questions in a MIT package's test suite; asserts here are simple. |
-| DL-18 | Streaming wrapper runs the request inside the iterator | Run eagerly in the method, return a completed enumerable | Iterator semantics give "errors on first `MoveNextAsync`" (FR-019) and cancellation through `[EnumeratorCancellation]`. |
+| DL-18 | Streaming runs the request inside the iterator (buffered wrapper for JSON-format requests; line-by-line for plain text since `docs/streaming-responses`) | Run eagerly in the method, return a completed enumerable | Iterator semantics give "errors on first `MoveNextAsync`" (FR-019) and cancellation through `[EnumeratorCancellation]`. |
 | DL-19 | Options copied at construction and validated once | Read live options | Thread safety (F-25) and no surprises from mutation after construction. |
 | DL-20 | Logging through source-generated `LoggerMessage` with typed, content-free parameters | `ILogger.LogDebug` with strings | Makes it structurally impossible to log a prompt (D9). |
 | DL-21 | Plain JSON answers: strip one surrounding code fence, then strict parse | Strict only; lenient extraction of the first JSON value | Models often fence JSON; extraction of "first JSON value" could accept garbage (SO-007). |

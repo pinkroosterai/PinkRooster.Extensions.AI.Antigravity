@@ -1,9 +1,9 @@
 # Spec: Real streaming responses
 
 **In one sentence** — `GetStreamingResponseAsync` yields the answer's text as agy produces it, instead of one update after the run ends, for developers using `AntigravityChatClient` as an `IChatClient`.
-**Status** — buildable
+**Status** — shaping
 **Coverage** — 8/9 clear · 1 partial · 0 missing
-**Confirmed** — 15/15 decisions · 0 assumed, unconfirmed
+**Confirmed** — 15/16 decisions · 1 assumed, unconfirmed
 **Research** — `research.md`
 
 ## Outcome
@@ -29,7 +29,7 @@ Which text is streamed: the text of every `agent_response` step, in order, with 
 
 Event shape, from two captures on agy 1.4.0 (`capture/`, `research.md § Captured stream-json shape`): each line is `{"event": "init"|"step_update"|"result", <same key>: {...}}`. `text_delta` is incremental, and the `DONE` event of a step can carry the last delta. Steps with `step_type` `agent_response` and no `text_delta` exist and yield nothing. The `result` event carries `status`, `response`, `usage` (summed over steps), `num_turns`, `duration_seconds`, `conversation_id`; it has no model, which is in `init.init.model`, so `ModelId` comes from `init`. Not captured: the timeout notice and `denied_actions` in a stream.
 
-A streaming request for a JSON-schema response format runs as today (`--output-format json`) and yields one update, because agy applies the schema to the final result only.
+A streaming request for a JSON-schema response format runs as today (`--output-format json`) and yields one update, because agy applies the schema to the final result only. A `ChatResponseFormat.Json` request (no schema) does the same, because its whole text is validated after the run.
 
 Update layout: text updates carry `TextContent` and `ResponseId` only; the last update carries `UsageContent`, `ModelId`, `CreatedAt`, `FinishReason`, `RawRepresentation`, `AdditionalProperties`.
 
@@ -93,6 +93,10 @@ States of a streaming request: not started → running (events arriving) → fin
 - **Stream schema requests via the final result only?** — would change: nothing for v1; revisit if agy adds partial structured output. Blocked by it: nothing.
 
 ## Decisions
+
+### 2026-10-17 (execution)
+
+- `assumed` **How it works** — a `ChatResponseFormat.Json` (no schema) streaming request takes the same single-update buffered path as a schema request — ruled out: streaming text that is only validated as JSON after the run. The spec did not cover this kind; found while planning (`research.md § Planning, 2026-10-16`).
 
 ### 2026-10-16 (readback)
 

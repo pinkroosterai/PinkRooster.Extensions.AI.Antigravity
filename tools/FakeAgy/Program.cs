@@ -3,6 +3,8 @@
 //
 //   FAKE_AGY_VERSION         text printed for "--version" (default "1.3.5")
 //   FAKE_AGY_STDOUT          text written to standard output
+//   FAKE_AGY_LINES           lines (separated by newlines) written to standard output one at a time, each flushed
+//   FAKE_AGY_LINE_DELAY_MS   wait this long after each of those lines
 //   FAKE_AGY_STDOUT_HEX      bytes (hex digits) written to standard output, for invalid UTF-8
 //   FAKE_AGY_STDERR          text written to standard error
 //   FAKE_AGY_STDOUT_MB       this many MiB of 'x' written to standard output
@@ -117,6 +119,19 @@ if (Env("FAKE_AGY_ECHO_ENV") is { } variable)
 if (Env("FAKE_AGY_STDOUT") is { } text)
 {
     Write(stdout, text);
+}
+
+if (Env("FAKE_AGY_LINES") is { } lines)
+{
+    _ = int.TryParse(Env("FAKE_AGY_LINE_DELAY_MS"), out int lineDelay);
+    foreach (string line in lines.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+    {
+        Write(stdout, line + "\n");
+        if (lineDelay > 0)
+        {
+            Thread.Sleep(lineDelay);
+        }
+    }
 }
 
 if (Env("FAKE_AGY_STDOUT_HEX") is { } hex)

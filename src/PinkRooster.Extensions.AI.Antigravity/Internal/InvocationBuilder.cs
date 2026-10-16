@@ -24,7 +24,8 @@ internal static class InvocationBuilder
         string? schemaFilePath,
         TimeSpan timeout,
         IEnumerable<string> additionalArguments,
-        IEnumerable<KeyValuePair<string, string?>> environmentVariables)
+        IEnumerable<KeyValuePair<string, string?>> environmentVariables,
+        bool streamJson = false)
     {
         ArgumentNullException.ThrowIfNull(prompt);
         ArgumentNullException.ThrowIfNull(additionalArguments);
@@ -32,7 +33,7 @@ internal static class InvocationBuilder
 
         var arguments = new List<string>
         {
-            "--output-format", "json",
+            "--output-format", streamJson ? "stream-json" : "json",
             "--disable-slash-commands",
         };
 

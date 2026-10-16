@@ -135,7 +135,7 @@ With `ChatResponseFormat.ForJsonSchema` (and `GetResponseAsync<T>`), the schema 
 
 `ChatResponse` has one assistant message; `ResponseId` is agy's conversation id; `ModelId` is the model you chose (null when none); `FinishReason` is always `Stop` on success; `Usage` maps agy's token counts (input, output, total, cached input, reasoning). `RawRepresentation` is agy's JSON (`JsonElement`), and `AdditionalProperties` has `agy.num_turns`, `agy.duration_seconds` and, when agy denied something, `agy.denied_actions`.
 
-`GetStreamingResponseAsync` runs the request and yields the whole answer as **one** update; there is no incremental text. Errors surface on the first `MoveNextAsync`.
+`GetStreamingResponseAsync` for a plain-text request runs agy with `stream-json` output and yields the answer text as agy writes it: one update per piece of text, then a final update with usage, `ResponseId`, `ModelId`, `FinishReason` and `AdditionalProperties` and no text. The text of every answer step is streamed, so when agy writes text between its own tool calls the joined text can be longer than `GetResponseAsync`'s. A request with a JSON response format (`ChatResponseFormat.Json` or a schema) yields the whole checked answer as **one** update, because it can only be checked when complete. Errors surface on a `MoveNextAsync` call: the first one when nothing was yielded yet, a later one when agy fails after text was sent (the text already yielded stands; nothing is retried). Stopping the enumeration early ends the agy process. A timeout is only visible once the run ends, as for any request; the stream carries no event for it.
 
 `GetService` returns `ChatClientMetadata` (provider `antigravity`, your default model) for `typeof(ChatClientMetadata)`, and the client itself for `typeof(AntigravityChatClient)`.
 
@@ -175,7 +175,7 @@ Where agy's documentation and agy 1.3.5 disagree, the library follows what agy d
 
 ## Not supported in 0.1.0
 
-Caller tool calling, real streaming, images and other non-text input, embeddings, conversation reuse, choosing the working directory, retrying invalid structured output, and agy's own agent, mode and permission settings. `docs/deferred.md` says how each could be added.
+Caller tool calling, streaming of tool steps and JSON-format answers, images and other non-text input, embeddings, conversation reuse, choosing the working directory, retrying invalid structured output, and agy's own agent, mode and permission settings. `docs/deferred.md` says how each could be added.
 
 ## Development
 

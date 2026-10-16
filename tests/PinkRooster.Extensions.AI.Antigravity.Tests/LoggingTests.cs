@@ -55,6 +55,29 @@ public class LoggingTests
     }
 
     [Fact]
+    public async Task A_streaming_request_logs_a_summary_without_any_content()
+    {
+        var logger = new CapturingLogger();
+        string stdout = """
+            {"event":"init","conversation_id":"c","init":{"model":"m"}}
+            {"event":"step_update","step_update":{"step_type":"agent_response","text_delta":"@ANSWER@"}}
+            {"event":"result","result":{"status":"SUCCESS","response":"@ANSWER@","usage":{"input_tokens":3,"output_tokens":4,"total_tokens":7}}}
+            """.Replace("@ANSWER@", SecretAnswer);
+        var runner = new FakeProcessRunner().Returns(FakeProcessRunner.Ok("1.3.5")).Returns(FakeProcessRunner.Ok(stdout, SecretStderr));
+        using AntigravityChatClient client = Client(runner, logger);
+
+        var updates = new List<ChatResponseUpdate>();
+        await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync(Clients.User(SecretPrompt), Options()))
+        {
+            updates.Add(update);
+        }
+
+        Assert.Equal(SecretAnswer, updates.ToChatResponse().Text);
+        Assert.Contains(logger.Entries, e => e.Level == LogLevel.Information && e.Message.Contains("agy request completed"));
+        AssertClean(logger);
+    }
+
+    [Fact]
     public async Task The_completion_entry_carries_model_time_prompt_length_and_token_counts()
     {
         var logger = new CapturingLogger();

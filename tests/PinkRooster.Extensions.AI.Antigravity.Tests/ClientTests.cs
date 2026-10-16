@@ -545,6 +545,9 @@ public sealed class ClientTests : IDisposable
 
         public int MaxOverlap => Volatile.Read(ref _maxOverlap);
 
+        public Task<AgyProcessResult> RunStreamingAsync(AgyProcessRequest request, Action<string> onStandardOutputLine, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public async Task<AgyProcessResult> RunAsync(AgyProcessRequest request, CancellationToken cancellationToken)
         {
             if (request.Arguments.Contains("--version"))

@@ -23,3 +23,4 @@ compared byte for byte with a file. They are replaced by files captured from a n
 | `exit1-bad-schema.stderr.txt` | Transcribed: exit code 1, empty stdout | T-B4 |
 | `cancel-context-canceled.json`, `cancel-context-canceled.stderr.txt` | Transcribed: exit code 1 after SIGTERM | T-D4 |
 | `not-signed-in.SYNTHETIC.json`, `not-signed-in.SYNTHETIC.stderr.txt` | **Synthetic**: built from the text the official documentation gives ("authentication required"); no real output exists (open question Q5) | none |
+| `stream-one-step.ndjson`, `stream-with-tool.ndjson` | **Captured** with agy 1.4.0 on 2026-10-16: `--output-format stream-json`, one answer step and one run with two tool calls (copies of `docs/streaming-responses/capture/`) | |

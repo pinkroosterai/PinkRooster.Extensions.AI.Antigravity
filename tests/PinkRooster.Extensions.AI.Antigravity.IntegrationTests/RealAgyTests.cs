@@ -169,6 +169,30 @@ public sealed class RealAgyTests : IDisposable
     }
 
     [IntegrationFact]
+    public async Task Streaming_yields_text_updates_that_join_to_the_answer()
+    {
+        using AntigravityChatClient client = Client();
+        var updates = new List<ChatResponseUpdate>();
+        var arrivals = new List<TimeSpan>();
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync(
+            "Write the numbers one to twenty as words, separated by commas. Do not use any tools."))
+        {
+            updates.Add(update);
+            arrivals.Add(watch.Elapsed);
+        }
+
+        ChatResponse combined = updates.ToChatResponse();
+        _output.WriteLine($"{updates.Count} updates; first at {arrivals[0]}, last at {arrivals[^1]}; text: {Truncate(combined.Text)}");
+        _output.WriteLine($"usage: in {combined.Usage?.InputTokenCount} out {combined.Usage?.OutputTokenCount}; id {combined.ResponseId}");
+        Assert.Contains("twenty", combined.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.True(updates.Count >= 2, "expected at least one text update and the final update");
+        Assert.NotNull(combined.Usage);
+        Assert.False(string.IsNullOrEmpty(combined.ResponseId));
+    }
+
+    [IntegrationFact]
     public async Task Reasoning_effort_with_base_model()
     {
         using AntigravityChatClient baseModel = Client(o => o.DefaultModelId = "gemini-3.8-flash");

@@ -14,7 +14,22 @@ internal sealed class AgyProcessRunner : IAgyProcessRunner
     private static readonly TimeSpan ExitGuard = TimeSpan.FromSeconds(5);
     private static readonly UTF8Encoding Utf8 = new(encoderShouldEmitUTF8Identifier: false);
 
-    public async Task<AgyProcessResult> RunAsync(AgyProcessRequest request, CancellationToken cancellationToken)
+    public Task<AgyProcessResult> RunAsync(AgyProcessRequest request, CancellationToken cancellationToken) =>
+        RunCoreAsync(request, null, cancellationToken);
+
+    public Task<AgyProcessResult> RunStreamingAsync(
+        AgyProcessRequest request,
+        Action<string> onStandardOutputLine,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(onStandardOutputLine);
+        return RunCoreAsync(request, onStandardOutputLine, cancellationToken);
+    }
+
+    private static async Task<AgyProcessResult> RunCoreAsync(
+        AgyProcessRequest request,
+        Action<string>? onLine,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
@@ -84,7 +99,8 @@ internal sealed class AgyProcessRunner : IAgyProcessRunner
                     outputOverflow = true;
                     overflow.Cancel();
                 },
-                readers.Token);
+                readers.Token,
+                onLine);
             stderrTask = ReadAsync(process.StandardError.BaseStream, StandardErrorKeepBytes, stopAtLimit: false, null, readers.Token);
 
             try
@@ -126,6 +142,45 @@ internal sealed class AgyProcessRunner : IAgyProcessRunner
         return new AgyProcessResult(exitCode, standardOutput, standardError, timedOut, outputOverflow, stopwatch.Elapsed);
     }
 
+    // Splits UTF-8 bytes into lines on '\n' (a byte that never occurs inside a multi-byte sequence) and decodes each line.
+    private sealed class LineSplitter(Action<string> onLine)
+    {
+        private readonly MemoryStream _pending = new();
+
+        public void Add(byte[] buffer, int count)
+        {
+            int start = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (buffer[i] != (byte)'\n')
+                {
+                    continue;
+                }
+
+                _pending.Write(buffer, start, i - start);
+                Emit();
+                start = i + 1;
+            }
+
+            _pending.Write(buffer, start, count - start);
+        }
+
+        public void Finish()
+        {
+            if (_pending.Length > 0)
+            {
+                Emit();
+            }
+        }
+
+        private void Emit()
+        {
+            string text = Decode(_pending.ToArray());
+            _pending.SetLength(0);
+            onLine(text.EndsWith('\r') ? text[..^1] : text);
+        }
+    }
+
     private static void CloseStandardInput(Process process)
     {
         try
@@ -143,9 +198,12 @@ internal sealed class AgyProcessRunner : IAgyProcessRunner
         int limit,
         bool stopAtLimit,
         Action? onLimit,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<string>? onLine = null)
     {
         var kept = new MemoryStream();
+        var line = onLine is null ? null : new LineSplitter(onLine);
+        long total = 0;
         byte[] buffer = new byte[16 * 1024];
         try
         {
@@ -154,7 +212,24 @@ internal sealed class AgyProcessRunner : IAgyProcessRunner
                 int read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
                 if (read == 0)
                 {
+                    line?.Finish();
                     break;
+                }
+
+                if (line is not null)
+                {
+                    // Lines are handed on and not kept; the limit counts every byte read.
+                    long left = limit - total;
+                    int usable = (int)Math.Min(read, Math.Max(left, 0));
+                    line.Add(buffer, usable);
+                    total += usable;
+                    if (usable < read)
+                    {
+                        onLimit?.Invoke();
+                        break;
+                    }
+
+                    continue;
                 }
 
                 long room = limit - kept.Length;

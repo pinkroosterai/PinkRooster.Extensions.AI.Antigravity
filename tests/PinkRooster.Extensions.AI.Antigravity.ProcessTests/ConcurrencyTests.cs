@@ -83,6 +83,9 @@ public class ConcurrencyTests
 
         public int MaxOverlap => Volatile.Read(ref _maxOverlap);
 
+        public Task<AgyProcessResult> RunStreamingAsync(AgyProcessRequest request, Action<string> onStandardOutputLine, CancellationToken cancellationToken) =>
+            inner.RunStreamingAsync(request, onStandardOutputLine, cancellationToken);
+
         public async Task<AgyProcessResult> RunAsync(AgyProcessRequest request, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref _runs);

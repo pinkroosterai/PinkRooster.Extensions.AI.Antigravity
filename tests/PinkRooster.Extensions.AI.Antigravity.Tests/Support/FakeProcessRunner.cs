@@ -35,4 +35,23 @@ internal sealed class FakeProcessRunner : IAgyProcessRunner
 
         return Task.FromResult(_script.Dequeue()(request));
     }
+
+    /// <summary>Takes the next scripted result and hands its standard output over line by line, as the real runner does.</summary>
+    public Task<AgyProcessResult> RunStreamingAsync(AgyProcessRequest request, Action<string> onStandardOutputLine, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Requests.Add(request);
+        if (_script.Count == 0)
+        {
+            throw new InvalidOperationException("The fake runner was called more often than scripted.");
+        }
+
+        AgyProcessResult scripted = _script.Dequeue()(request);
+        foreach (string line in scripted.StandardOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            onStandardOutputLine(line.TrimEnd('\r'));
+        }
+
+        return Task.FromResult(scripted with { StandardOutput = string.Empty });
+    }
 }
