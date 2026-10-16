@@ -2,8 +2,8 @@
 
 **In one sentence** — `GetStreamingResponseAsync` yields the answer's text as agy produces it, instead of one update after the run ends, for developers using `AntigravityChatClient` as an `IChatClient`.
 **Status** — shaping
-**Coverage** — 8/9 clear · 0 partial · 1 missing
-**Confirmed** — 0/12 decisions · 8 assumed, unconfirmed
+**Coverage** — 8/9 clear · 1 partial · 0 missing
+**Confirmed** — 0/14 decisions · 8 assumed, unconfirmed
 **Research** — `research.md`
 
 ## Outcome
@@ -27,7 +27,7 @@ A streaming request for plain text runs agy with `--output-format stream-json` (
 
 Which text is streamed: the text of every `agent_response` step, in order, with nothing inserted between steps. Mid-run text agy writes around its own tool calls is therefore in the stream.
 
-What the `result` event contains (the owner runs the capture in `capture.md` before planning): [BLOCKING: is `text_delta` incremental or cumulative, and does `result` carry `status`, `usage`, `response`, `denied_actions` and the timeout notice? Not captured on any agy version; needs one paid `agy -p --output-format stream-json` run by the owner].
+Event shape, from two captures on agy 1.4.0 (`capture/`, `research.md § Captured stream-json shape`): each line is `{"event": "init"|"step_update"|"result", <same key>: {...}}`. `text_delta` is incremental, and the `DONE` event of a step can carry the last delta. Steps with `step_type` `agent_response` and no `text_delta` exist and yield nothing. The `result` event carries `status`, `response`, `usage` (summed over steps), `num_turns`, `duration_seconds`, `conversation_id`; it has no model, which is in `init.init.model`, so `ModelId` comes from `init`. Not captured: the timeout notice and `denied_actions` in a stream.
 
 A streaming request for a JSON-schema response format runs as today (`--output-format json`) and yields one update, because agy applies the schema to the final result only.
 
@@ -60,7 +60,7 @@ States of a streaming request: not started → running (events arriving) → fin
 - **`AgyProcessRunner`**: needs a line-by-line reading mode next to the buffered one; remains the only code touching `Process`.
 - **agy version**: stream-json seen on 1.3.5, current is 1.4.0; the version check already warns on unknown versions.
 
-## Edge cases and failure modes
+## Edge cases and failure modes [THIN: timeout notice and denied_actions not seen in a stream-json run]
 
 | Case | Behavior |
 |---|---|
@@ -72,7 +72,7 @@ States of a streaming request: not started → running (events arriving) → fin
 | Run ends without a `result` event | Treated as a failed run (exit code decides the type). |
 | Stdout line that is not valid JSON | Failure as above; line content never logged. |
 | Run succeeds but produced no text | One final update, no `TextContent`. |
-| Two streaming calls at once | Share `MaxConcurrency` with other requests; a slot is held until the enumeration ends. |
+| Two streaming calls at once | Share `MaxConcurrency` with other requests; a slot is held until the enumeration ends or the `Timeout` runs out, so a caller that stops reading without disposing cannot hold it for longer than `Timeout`. |
 | Caller never enumerates | Nothing starts (the request runs inside the iterator). |
 
 ## Success criteria
@@ -93,6 +93,11 @@ States of a streaming request: not started → running (events arriving) → fin
 - **Stream schema requests via the final result only?** — would change: nothing for v1; revisit if agy adds partial structured output. Blocked by it: nothing.
 
 ## Decisions
+
+### 2026-10-16 (capture)
+
+- `sourced` **How it works** — `text_delta` is incremental; `result` has `status`, `response`, `usage`, no model; model is in `init` — `research.md § Captured stream-json shape`. Joining the deltas of both captures equals `result.response`.
+- `sourced` **How it works** — steps without `text_delta` yield nothing — `research.md § Captured stream-json shape`.
 
 ### 2026-10-16
 

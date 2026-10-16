@@ -23,3 +23,14 @@ Source: `src/PinkRooster.Extensions.AI.Antigravity/AntigravityChatClient.cs:156`
 ## Not checked
 
 The `ChatResponseUpdate` conventions in Abstractions 10.3.0 (one update per delta, usage in a trailing `UsageContent` update, `ToChatResponse()` merging). From memory only; the plan must read the package.
+
+## Captured stream-json shape
+
+Two runs on agy 1.4.0, model gemini-3.8-flash-low, new empty directory, exit 0, empty stderr, files in `capture/` (`one-step.ndjson`, 5 lines; `with-tool.ndjson`, 18 lines). Run 2026-10-16 at the owner's request.
+
+- Line format: `{"event": "<kind>", "<kind>": {...}}` with kinds `init`, `step_update`, `result`. `init` holds `model`, `cwd`, `tools`.
+- `step_update` has `step_index`, `state` (`ACTIVE`/`DONE`), `step_type` (`user_input`, `agent_response`, `tool`), optional `text_delta`, and on `DONE` `duration_seconds` and `usage`. `tool` steps carry `tool_name`, `tool_info`.
+- `text_delta` is incremental. The `DONE` event of a step may carry the final piece (a newline, or the last sentence).
+- In the tool run, `agent_response` steps 1 and 3 (before each tool call) had **no** text; only step 5 (after the tools) had text. So the narration-between-tools case did not occur in this run; whether it ever does is unknown.
+- `result` has `conversation_id`, `status` (`SUCCESS`), `response`, `duration_seconds`, `num_turns`, `usage` (summed over steps). `result.response` equalled the joined deltas in both runs.
+- Not seen: `denied_actions`, `error`, the timeout notice, any non-SUCCESS status, `structured_output`.
