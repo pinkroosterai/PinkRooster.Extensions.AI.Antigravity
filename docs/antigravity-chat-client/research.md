@@ -148,3 +148,9 @@ The 0.1.0 package from a clean clone contains `net8.0` and `net10.0` assemblies 
 ### Process-runner overhead
 
 Median of 7 rounds, three runs: starting the fake agy by hand 23–25 ms, through the runner 24–25 ms; overhead −2 to +1 ms. Linux only. Source: `OverheadTests` output, 2026-10-16.
+
+## Execution, Phase 7, 2026-10-16
+
+### agy 1.4.0 free checks
+
+`agy --version` now prints 1.4.0 (it printed 1.3.5 during the research on the same machine; the CLI updated itself, binary timestamp 2026-10-16 13:35). Four checks that make no model call gave on 1.4.0 the same result as on 1.3.5: an unknown model exits 1 with an `ERROR` envelope whose `error` text lists the available models over several lines; an empty prompt exits 1 with the `empty prompt` envelope; an invalid `--json-schema` exits 1 with empty stdout and the same stderr text; `--model gemini-3.8-flash-low --effort high` exits 1 with `conflicts with --effort=high`. `agy --help` lists the same print-mode flags; `agy models` lists the same six models. Behavior that needs a model call (timeouts, denials, structured output, the schema-missing case) is not checked on 1.4.0 and waits for the owner's run. Source: local runs, 2026-10-16.
