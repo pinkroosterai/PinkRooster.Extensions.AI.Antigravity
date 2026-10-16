@@ -1,7 +1,7 @@
 # Plan: Antigravity IChatClient library, v0.1.0
 
 **Goal** — Ship `PinkRooster.Extensions.AI.Antigravity` 0.1.0: plain-text and JSON-schema requests work through `IChatClient` against real agy, the unit and fake-process suites pass on Linux, Windows and macOS, and the package builds and packs from a clean checkout; done is shown by acceptance criteria AC-01 to AC-07 each having evidence in the Log.
-**Status** — not started
+**Status** — phase 6 in progress
 **Research** — `research.md`
 
 ## Context
@@ -98,16 +98,16 @@ These apply in every phase; they come from `~/.claude/CLAUDE.md` and the project
 
 ## Phase 6 — Surface, documentation and package
 
-**Status** — not started
+**Status** — done
 **Rests on** — Phases 4 and 5 are done; the SPEC facts and constraints that the README must state (SPEC §6, NFR-006, NFR-007, NFR-009, F-39, F-41) are unchanged.
 **Settle first** — Whether the package id `PinkRooster.Extensions.AI.Antigravity` is free on nuget.org (not checked; answer in `research.md § Package id`).
 **Tasks**
-- [ ] Add the dependency-injection extension — SPEC FR-032, §9.1; DESIGN C14; test `DiExtensionTests`.
-- [ ] Write the README with every item of SPEC FR-037 and the known residue of DESIGN §7.1 (MCP servers, stored transcripts, process-list visibility, token overhead, ignored options, effort rule, error table, tested agy versions) — SPEC §6, §4.2.
-- [ ] Add a README checklist test or file that lists the FR-037 items and ticks them — DESIGN §8.5 `ReadmeChecklist`.
-- [ ] Add the console sample; it must compile and must not be run by the executor (it spends tokens) — DESIGN §10.1, DEC D1.
-- [ ] Complete package metadata, symbols and source link, set version 0.1.0 — DESIGN §10.2, §10.3.
-- [ ] Add the CI step that runs the unit and process suites with agy absent from `PATH` — SPEC NFR-013.
+- [x] Add the dependency-injection extension — SPEC FR-032, §9.1; DESIGN C14; test `DiExtensionTests`.
+- [x] Write the README with every item of SPEC FR-037 and the known residue of DESIGN §7.1 (MCP servers, stored transcripts, process-list visibility, token overhead, ignored options, effort rule, error table, tested agy versions) — SPEC §6, §4.2.
+- [x] Add a README checklist test or file that lists the FR-037 items and ticks them — DESIGN §8.5 `ReadmeChecklist`.
+- [x] Add the console sample; it must compile and must not be run by the executor (it spends tokens) — DESIGN §10.1, DEC D1.
+- [x] Complete package metadata, symbols and source link, set version 0.1.0 — DESIGN §10.2, §10.3.
+- [x] Add the CI step that runs the unit and process suites with agy absent from `PATH` — SPEC NFR-013.
 **Done when** — the full solution builds with `-warnaserror` and the unit and process suites pass; `dotnet pack` from a clean clone produces the package and the symbols package; every README checklist item is ticked; the suites pass with agy removed from `PATH`.
 
 ## Phase 7 — Real agy and release gate (owner-run)
@@ -141,3 +141,4 @@ These apply in every phase; they come from `~/.claude/CLAUDE.md` and the project
 - 2026-10-16 · Phase 4 · done. Built: envelope parser, error classifier with the sign-in detector isolated in one class, response mapper, content-free logging (`LogMessages`), `AntigravityChatClient` (ordered steps, per-instance concurrency gate, copy of options, `GetService`, one-update streaming, disposal), 14 fixture groups, and tests: unit 326 (`EnvelopeParserTests`, `ErrorClassifierTests`, `ResponseMapperTests`, `ClientTests`, `StreamingTests`, `LoggingTests`, `LoggingDisciplineTests`) plus process 35 (adds `ConcurrencyTests`, `EndToEndTests`). Done-when output: `dotnet build PinkRooster.Extensions.AI.Antigravity.sln -warnaserror` → 0 warnings, 0 errors; unit suite Passed 326, Failed 0; process suite Passed 35, Failed 0; `pgrep -x FakeAgy` → 0 left. Every EC test of DESIGN §8.6 except EC-18 and EC-19 exists and passes; the plain request through the real runner and FakeAgy is `EndToEndTests.A_plain_request_through_the_real_runner_and_the_fake_agy_returns_the_expected_response`; one runner call per request in every error path is `ClientTests.A_failed_run_is_reported_once_and_never_retried` and `…A_timeout_is_reported_once_and_never_retried`; logging only through `LogMessages` is `LoggingDisciplineTests`. Two mutations confirmed the logging and no-retry tests detect breakage. Adjustments: fixtures mostly transcribed, not synthetic (see research.md); structured formats refused temporarily (Phase 5 task); `GetService` follows SPEC FR-018 literally. Nothing delegated.
 - 2026-10-16 · Phase 5 · Rests on verified: Phase 4 client passes (committed 645d9c4); `research.md § Does GetResponseAsync<T> wrap…` unchanged; F-35 shape is in the `schema-missing-structured.json` fixture and parses. Settle first (validator): spike done, see research.md § Schema validator.
 - 2026-10-16 · Phase 5 · done. Built: validator interface and `LateApexEarlySpeed.Json.Schema` 4.2.2 implementation (format annotation-only), structured-result checker (schema result from `structured_output` as compact JSON; plain-JSON path with one code fence tolerated), schema delivery by file and pre-flight compile in the client, 76 new unit tests (`SchemaValidatorTests`, `StructuredOutputTests`, `StructuredRoundTripTests`). Done-when output: `dotnet build PinkRooster.Extensions.AI.Antigravity.sln -warnaserror` → 0 warnings, 0 errors; unit suite Passed 412, Failed 0 (EC-18 and EC-19 included); process suite Passed 35, Failed 0; `dotnet list package --vulnerable --include-transitive` for the library → no vulnerable packages. Two mutations (validation disabled; response text returned instead of `structured_output`) each failed 7 tests. Settled: validator choice (research.md § Schema validator). Findings that changed the build: `format` was asserted by default and would reject answers the typed deserialization accepts, so it is switched to annotation-only; some schema defects only raise when an answer reaches them, so `IsValid` also maps to `ArgumentException` (after one run). Cost to flag for the user: the validator brings about 11 old (3.1.0) Microsoft.Extensions.* packages into consumers' graphs. Docs not committed in this phase and edited: `docs/software-design.md` (DL-30). Nothing delegated.
+- 2026-10-16 · Phase 6 · Rests on verified: Phases 4 and 5 committed (05c52b4) and green; the README-bound facts in SPEC §6, NFR-006, NFR-007, NFR-009, F-39, F-41 unchanged (`docs/specification.md` untouched since the step-5 review).

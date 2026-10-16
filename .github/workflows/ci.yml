@@ -19,6 +19,10 @@ jobs:
           dotnet-version: |
             8.0.x
             10.0.x
+      - name: Check that agy is not installed on the runner
+        shell: bash
+        run: |
+          if command -v agy >/dev/null 2>&1; then echo "agy is on the PATH; the suites must not need it"; exit 1; fi
       - name: Build
         run: dotnet build PinkRooster.Extensions.AI.Antigravity.sln --configuration Release -warnaserror
       - name: Unit tests
