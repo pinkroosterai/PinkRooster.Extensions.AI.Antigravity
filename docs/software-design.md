@@ -326,7 +326,8 @@ The prompt has these parts, in order. `{n}` is a random 6-hex-digit nonce per re
 | `ChatRole.Tool` or any other role | `ArgumentException` (EC-26). |
 | `TextContent` | Text part, unchanged. |
 | `TextReasoningContent` | Dropped. |
-| `DataContent`, `UriContent`, `FunctionCallContent`, `FunctionResultContent`, approval and other content | `NotSupportedException` before spawn (FR-007, EC-23). |
+| `DataContent` image in a user message | An `Attachment` written under `attachments/` in the request directory; the turn text carries `[attachment: attachments/image-N.ext]` (FR-007). |
+| Other `DataContent`, `UriContent`, `FunctionCallContent`, `FunctionResultContent`, approval and other content | `NotSupportedException` before spawn (FR-007, EC-23). |
 | Message with no text parts after dropping | Skipped; if nothing at all remains, `ArgumentException` (EC-24). |
 | Length | Prompt length in chars must be at most `MaxPromptLength` **and** its UTF-8 size at most the platform byte ceiling (section 5.7); else `AntigravityPromptTooLargeException` (FR-012, EC-20). |
 

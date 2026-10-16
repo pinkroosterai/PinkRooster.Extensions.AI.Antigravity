@@ -30,6 +30,8 @@ internal static class PromptBuilder
 
         if (!systemTextInFile)
         {
+            preamble = AgentsFile.EffectivePreamble(request, preamble);
+
             // A prompt that starts with '/' would run an agy command, and one that starts with '-' could be read as a flag;
             // a neutral first line rules both out whatever the caller put in the preamble (FR-013). With the system text in
             // AGENTS.md the prompt starts with fixed text, so the guard is not needed.

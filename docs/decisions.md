@@ -59,7 +59,7 @@ Date: 2026-10-16. Inputs: `docs/research-findings.md` (cited as F#n, "finding n"
 |---|---|---|
 | M1 | All messages and `ChatOptions.Instructions` are flattened into **one prompt**: preamble, then system text, then the conversation as labeled turns (`User:` / `Assistant:`), ending with a request for the next assistant reply. Stateless; history is always resent. | Default |
 | M2 | `ChatRole.System` and `Instructions` → one system section (messages first, then `Instructions`). Unknown custom roles → `ArgumentException`. | Default |
-| M3 | Content: `TextContent` mapped; `TextReasoningContent` in history dropped; `DataContent`, `UriContent`, and any function call/result/approval content → `NotSupportedException` (tools and multimodal are out of v1, see section 7 and `deferred.md`). Empty message list or no text → `ArgumentException`. | Default |
+| M3 | Content: `TextContent` mapped; `TextReasoningContent` in history dropped; `DataContent` images (png, jpeg, gif, webp, user messages) → files in the request directory (amended 2026-10-16, `docs/multimodal-input/plan.md`); `UriContent`, other `DataContent`, and any function call/result/approval content → `NotSupportedException`. Empty message list or no text → `ArgumentException`. | Default |
 | M4 | Prompt goes in argv (no shell, so no escaping). Longer than `MaxPromptLength` → `AntigravityPromptTooLargeException`; no file fallback in v1. | Asked |
 
 ## 7. ChatOptions mapping

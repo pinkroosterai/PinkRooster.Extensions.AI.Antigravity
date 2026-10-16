@@ -290,7 +290,7 @@ public sealed class ClientTests : IDisposable
     {
         FakeProcessRunner runner = Clients.Runner();
         using AntigravityChatClient client = Clients.Create(runner);
-        var messages = new List<ChatMessage> { new(ChatRole.User, [new TextContent("q"), new DataContent(new byte[] { 1 }, "image/png")]) };
+        var messages = new List<ChatMessage> { new(ChatRole.User, [new TextContent("q"), new DataContent(new byte[] { 1 }, "application/pdf")]) };
 
         await Assert.ThrowsAsync<NotSupportedException>(() => client.GetResponseAsync(messages));
 

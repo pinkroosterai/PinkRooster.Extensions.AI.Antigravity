@@ -154,7 +154,7 @@ Honored: `ModelId`, `ResponseFormat`, `Instructions`, `Reasoning`, and `Tools` w
 | `ConversationId`, `ContinuationToken`, `AllowBackgroundResponses` | Ignored: the client is stateless and sends the whole conversation every time. |
 | `AllowMultipleToolCalls`, `RawRepresentationFactory`, `AdditionalProperties` | Ignored. |
 
-Messages: system, user and assistant messages become one prompt (a preamble, then the system text, then the turns in order, each under a header with a random per-request code so that text in a message cannot pose as a turn). Text is passed unchanged. Reasoning content in history is dropped. Images, files, URIs and tool calls or results raise `NotSupportedException`. A prompt reaches agy as one command-line argument, without a shell.
+Messages: system, user and assistant messages become one prompt (a preamble, then the system text, then the turns in order, each under a header with a random per-request code so that text in a message cannot pose as a turn). Text is passed unchanged. Reasoning content in history is dropped. Images (`DataContent` of type png, jpeg, gif or webp in user messages, at most 10 of 10 MiB each) are written as files in the request directory and the prompt points agy at them; agy 1.4.0 was seen reading a jpeg this way (png, gif and webp are unchecked). URIs, other files and tool calls or results raise `NotSupportedException`. A prompt reaches agy as one command-line argument, without a shell.
 
 ## Structured output
 
@@ -210,7 +210,7 @@ Where agy's documentation and agy 1.3.5 disagree, the library follows what agy d
 
 ## Not supported in 0.1.0
 
-Caller tool calling, streaming of tool steps and JSON-format answers, images and other non-text input, embeddings, conversation reuse, choosing the working directory, retrying invalid structured output, and agy's own agent, mode and permission settings. `docs/deferred.md` says how each could be added.
+Caller tool calling, streaming of tool steps and JSON-format answers, audio, video, files and image URIs, embeddings, conversation reuse, choosing the working directory, retrying invalid structured output, and agy's own agent, mode and permission settings. `docs/deferred.md` says how each could be added.
 
 ## Development
 

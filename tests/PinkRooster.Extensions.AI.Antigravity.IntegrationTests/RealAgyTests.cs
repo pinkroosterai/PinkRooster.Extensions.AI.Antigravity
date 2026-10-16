@@ -193,6 +193,25 @@ public sealed class RealAgyTests : IDisposable
     }
 
     [IntegrationFact]
+    public async Task A_real_agy_describes_an_attached_image()
+    {
+        using AntigravityChatClient client = Client();
+        byte[] photo = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "rooster-profile.jpg"));
+        var messages = new List<ChatMessage>
+        {
+            new(ChatRole.User, [new TextContent("Which animal is in the attached image? Answer with a single English word."), new DataContent(photo, "image/jpeg")]),
+        };
+
+        ChatResponse response = await client.GetResponseAsync(messages);
+
+        Describe(response);
+        object? denied = null;
+        response.AdditionalProperties?.TryGetValue("agy.denied_actions", out denied);
+        _output.WriteLine($"denied actions: {(denied is IEnumerable<string> names ? string.Join(", ", names) : "none")}");
+        Assert.Matches("(?i)rooster|chicken|cock|hen", response.Text);
+    }
+
+    [IntegrationFact]
     public async Task A_real_agy_calls_a_caller_tool_through_the_bridge_without_skip_permissions()
     {
         int runs = 0;

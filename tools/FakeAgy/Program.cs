@@ -17,6 +17,8 @@
 //   FAKE_AGY_READ_STDIN=1    read standard input to its end and write "stdin-length:N"
 //   FAKE_AGY_ECHO_CONTEXT=1  write a success envelope whose response lists HOME, whether it is a directory, the contents of
 //                            AGENTS.md in the working directory (or "<none>") and the received arguments
+//   FAKE_AGY_ECHO_ATTACHMENTS=1  write a success envelope whose response lists each file under "attachments" in the working
+//                            directory as "name:length:first-bytes-hex", and the received arguments
 //   FAKE_AGY_MCP_CALLS       lines of "tool|{json arguments}": act as agy toward the MCP server named in $HOME/.gemini/config/mcp_config.json
 //                            (agy's observed sequence), call each tool, and answer with a success envelope listing the results; when the
 //                            allow rule in $HOME/.gemini/antigravity-cli/settings.json is missing, answer as agy does without permission
@@ -128,6 +130,20 @@ if (Env("FAKE_AGY_ECHO_CONTEXT") == "1")
         "agents=" + (File.Exists(agentsPath) ? File.ReadAllText(agentsPath) : "<none>") + "\n" +
         "args=" + JsonSerializer.Serialize(args);
     Write(stdout, JsonSerializer.Serialize(new { status = "SUCCESS", response = context, conversation_id = "ctx-1" }));
+}
+
+if (Env("FAKE_AGY_ECHO_ATTACHMENTS") == "1")
+{
+    string folder = Path.Combine(Directory.GetCurrentDirectory(), "attachments");
+    IEnumerable<string> found = Directory.Exists(folder)
+        ? Directory.EnumerateFiles(folder).OrderBy(f => f, StringComparer.Ordinal).Select(f =>
+        {
+            byte[] bytes = File.ReadAllBytes(f);
+            return Path.GetFileName(f) + ":" + bytes.Length + ":" + Convert.ToHexString(bytes.AsSpan(0, Math.Min(4, bytes.Length)));
+        })
+        : [];
+    string listing = "files=" + string.Join(",", found) + "\nargs=" + JsonSerializer.Serialize(args);
+    Write(stdout, JsonSerializer.Serialize(new { status = "SUCCESS", response = listing, conversation_id = "att-1" }));
 }
 
 if (Env("FAKE_AGY_MCP_CALLS") is { } mcpCalls)

@@ -119,7 +119,7 @@ public class RequestValidatorTests
 
     public static IEnumerable<object[]> UnsupportedContents()
     {
-        yield return [new DataContent(new byte[] { 1, 2, 3 }, "image/png")];
+        yield return [new DataContent(new byte[] { 1, 2, 3 }, "application/pdf")];
         yield return [new UriContent("https://example.com/a.png", "image/png")];
         yield return [new FunctionCallContent("id", "fn", new Dictionary<string, object?>())];
         yield return [new FunctionResultContent("id", "result")];

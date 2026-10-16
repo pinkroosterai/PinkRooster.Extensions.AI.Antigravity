@@ -14,6 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\assets\images\rooster-profile.jpg" Link="rooster-profile.jpg" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PinkRooster.Extensions.AI.Antigravity\PinkRooster.Extensions.AI.Antigravity.csproj" />
   </ItemGroup>
 

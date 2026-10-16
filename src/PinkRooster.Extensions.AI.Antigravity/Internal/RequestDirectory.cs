@@ -108,6 +108,22 @@ internal sealed class RequestDirectory : IDisposable
         File.WriteAllText(System.IO.Path.Combine(Path, AgentsFile.FileName), content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
+    /// <summary>Writes the request's images under their library-chosen relative paths, where agy reads them.</summary>
+    public void WriteAttachments(IReadOnlyList<Attachment> attachments)
+    {
+        ArgumentNullException.ThrowIfNull(attachments);
+        if (attachments.Count == 0)
+        {
+            return;
+        }
+
+        CreateOwnerOnly(System.IO.Path.Combine(Path, RequestValidator.AttachmentFolder));
+        foreach (Attachment attachment in attachments)
+        {
+            File.WriteAllBytes(System.IO.Path.Combine(Path, attachment.RelativePath), attachment.Data.ToArray());
+        }
+    }
+
     /// <summary>Writes the schema where agy can read it by path and returns that path.</summary>
     public string WriteSchemaFile(string schemaText)
     {

@@ -34,6 +34,14 @@ try
     ChatResponse withTool = await client.GetResponseAsync("Will it rain in Utrecht? Use the forecast tool.", options);
     Console.WriteLine($"With a tool: {withTool.Text}");
 
+    // An image: the bytes go in as DataContent (png, jpeg, gif or webp, in a user message); the library writes them as a file for agy.
+    byte[] photo = await File.ReadAllBytesAsync(Path.Combine(AppContext.BaseDirectory, "rooster-profile.jpg"));
+    ChatResponse seen = await client.GetResponseAsync(
+    [
+        new ChatMessage(ChatRole.User, [new TextContent("Which animal is in this photo, and what color is its comb?"), new DataContent(photo, "image/jpeg")]),
+    ]);
+    Console.WriteLine($"Image: {seen.Text}");
+
     // A typed answer constrained by a JSON schema.
     ChatResponse<Capital> typed = await client.GetResponseAsync<Capital>("What is the capital of France?");
     Console.WriteLine($"Typed: {typed.Result.City} ({typed.Result.Country})");

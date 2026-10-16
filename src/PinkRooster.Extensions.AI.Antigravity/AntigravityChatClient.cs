@@ -94,6 +94,7 @@ public sealed class AntigravityChatClient : IChatClient
             {
                 directory.WriteAgentsFile(prepared.AgentsFile);
             }
+            directory.WriteAttachments(prepared.Request.Attachments ?? []);
 
             using var bridgeStop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             await using ToolBridge? bridge = await StartBridgeAsync(request, directory, bridgeStop).ConfigureAwait(false);
@@ -185,6 +186,7 @@ public sealed class AntigravityChatClient : IChatClient
             {
                 directory.WriteAgentsFile(prepared.AgentsFile);
             }
+            directory.WriteAttachments(prepared.Request.Attachments ?? []);
 
             using var bridgeStop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             await using ToolBridge? bridge = await StartBridgeAsync(prepared.Request, directory, bridgeStop).ConfigureAwait(false);

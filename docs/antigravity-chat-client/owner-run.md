@@ -8,7 +8,7 @@ Written 2026-10-16 for plan phase 7. These runs call the model, so they spend to
 - The solution builds: `dotnet build -warnaserror` from the repository root.
 - Cost, estimated and not measured: about 18 model calls (13 in `RealAgyTests`, 5 in the capture), each around 17,000 to 22,000 input tokens on `gemini-3.8-flash-low`, so roughly 300,000 to 400,000 input tokens. The unsatisfiable-schema and essay-length cases are the longest. Each test also leaves one more conversation in `~/.gemini/antigravity-cli/brain/`.
 
-## Run 1: the library against the real agy (16 calls)
+## Run 1: the library against the real agy (17 calls)
 
 ```
 AGY_INTEGRATION_TESTS=1 dotnet test tests/PinkRooster.Extensions.AI.Antigravity.IntegrationTests \
@@ -29,6 +29,7 @@ Expected: 11 tests pass and 1 is skipped (the not-signed-in one needs run 3). A 
 | `Streaming_yields_text_updates_that_join_to_the_answer` | 1 | Several updates (the output line says how many and when the first and last arrived: the first should come well before the last); text contains "twenty"; usage and response id set | One update only (agy sent the text in one piece, or the stream reader dropped events); an `AntigravityOutputException` (the stream shape differs from `docs/streaming-responses/capture/`) |
 | `A_real_agy_calls_a_caller_tool_through_the_bridge_without_skip_permissions` | 1 | The answer contains `ZEBRA-4417`; the output says the tool body ran at least once; no skip-permissions flag was used | `AntigravityRunException` or an empty answer (agy denied the MCP permission: the allow rule in the temp home was not honoured on this agy version — report it); the tool body ran 0 times; a timeout (agy could not reach the bridge or did not read its schema) |
 | `Isolated_home_keeps_sign_in_and_follows_an_agents_md_rule` | 1 | No exception (sign-in survives the per-request `HOME`); the answer contains `PINEAPPLE-7` (the system text arrived through `AGENTS.md`); the answer has no trailing lines from your own global agy rules | `AntigravityNotAuthenticatedException` (sign-in does not survive the redirect on this machine: set `IsolateAgyHome` to false and report); no `PINEAPPLE-7` (the `AGENTS.md` rule was ignored); user-rule suffix lines still present |
+| `A_real_agy_describes_an_attached_image` | 1 | The answer names the animal (`rooster`, `chicken`, `cock` or `hen`; the photo `assets/images/rooster-profile.jpg` is sent as `attachments/image-1.jpg`); the output line shows no denied actions | An answer that does not name the animal or says it cannot see an image (the model got no pixels: report the answer); `denied actions` listing a read (agy needs a permission for reading the attachment: report the action name, the fix is an allow rule in the per-request settings); an exception |
 | `Reasoning_effort_with_base_model` | 2 | Both answers contain "ok" (the effort is passed for `gemini-3.8-flash` and left out for `gemini-3.8-flash-low`) | `AntigravityProcessException` mentioning `conflicts with --effort` |
 
 ## Run 2: capture fresh fixtures (3 free, 5 paid calls)
