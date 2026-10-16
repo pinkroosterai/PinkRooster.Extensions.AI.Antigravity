@@ -18,6 +18,17 @@ try
     Console.WriteLine($"Answer: {reply.Text}");
     Console.WriteLine($"Tokens: {reply.Usage?.InputTokenCount} in, {reply.Usage?.OutputTokenCount} out (agy's own overhead is included)");
 
+    // Streaming: the text is written as agy produces it. The last update carries usage and no text.
+    Console.Write("Streamed: ");
+    await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync("Count from one to five in words, separated by commas."))
+    {
+        Console.Write(update.Text);
+        if (update.Contents.OfType<UsageContent>().FirstOrDefault() is { } usage)
+        {
+            Console.WriteLine($"{Environment.NewLine}Tokens: {usage.Details.InputTokenCount} in, {usage.Details.OutputTokenCount} out");
+        }
+    }
+
     // A typed answer constrained by a JSON schema.
     ChatResponse<Capital> typed = await client.GetResponseAsync<Capital>("What is the capital of France?");
     Console.WriteLine($"Typed: {typed.Result.City} ({typed.Result.Country})");
