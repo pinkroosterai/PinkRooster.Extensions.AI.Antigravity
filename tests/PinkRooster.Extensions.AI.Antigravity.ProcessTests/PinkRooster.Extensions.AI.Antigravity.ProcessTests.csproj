@@ -17,6 +17,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\tools\FakeAgy\FakeAgy.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- The fake agy is copied next to the tests so they can start it like the real executable. -->
+  <Target Name="CopyFakeAgy" AfterTargets="Build">
+    <ItemGroup>
+      <FakeAgyFile Include="$(MSBuildThisFileDirectory)..\..\tools\FakeAgy\bin\$(Configuration)\net10.0\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FakeAgyFile)" DestinationFolder="$(OutDir)fakeagy\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

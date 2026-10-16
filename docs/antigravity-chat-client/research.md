@@ -78,3 +78,22 @@ At Abstractions 10.3.0, `ChatOptions.ContinuationToken` and `ChatOptions.AllowBa
 ### Test tooling observation
 
 Tests that must prove a guard exists were checked once by breaking the guard (prompt-start rule in `PromptBuilder`): four tests failed, then passed again after restoring it. Source: local run, 2026-10-16.
+
+## Execution, Phase 3, 2026-10-16
+
+### Process behavior
+
+Linux only (Ubuntu, kernel 7.0.0-38, .NET 10.0.12); Windows and macOS are not settled because no CI exists (no remote) and no such machine is at hand, so they carry into Phase 7.
+
+- **Largest single argument** `Process.Start` accepts through `ArgumentList`: 131,071 ASCII characters (bytes); 131,072 fails at start. .NET reports the failure as a `Win32Exception`, which the runner turns into `AntigravityProcessException` ("agy could not be started"). The library's ceiling of 120,000 bytes sits below this and starts a process fine. Matches the kernel's per-argument limit of 128 KiB including the terminator; the earlier 150,000-byte observation (SPEC F-11) is consistent. Source: `ArgumentSizeTests` output, 2026-10-16.
+- **Closing standard input right after start** gives the child end-of-file at once (`stdin-length:0`), the same as the verified `</dev/null` runs. Source: `Standard_input_is_closed…` test, 2026-10-16.
+- **Argument passing**: arguments containing newlines, quotes, `$()`, `;`, `&`, `|`, backticks, a leading `--model`, emoji and trailing spaces arrive unchanged, one list entry each. Source: `Each_argument_arrives_unchanged…` test, 2026-10-16.
+- **Tree kill**: ending the root with `entireProcessTree: true` also ended a sleeping child that shares the standard streams, on timeout, cancellation and output overflow. With `entireProcessTree: false` the same three tests fail (the child survives), so the tests do detect a missing tree kill. Source: `ProcessCleanupTests` and a mutation run, 2026-10-16.
+- **Descendant that holds the pipes after the root exited**: without a bound the readers would wait for it; with the 2-second grace period the runner returned in about 2 s with the output read so far. The runner does not end such a descendant: once the root has exited it can no longer be found as the root's child. Not reproduced with the real agy; its MCP servers ended with it in the earlier Linux test (SPEC F-40). Source: `A_descendant_that_keeps_the_pipes_open…` test, 2026-10-16.
+- **Pipe inheritance hang, sequential reading**: reading standard output to the end before starting to read standard error hangs when the child writes 2 MiB to standard error first; the concurrent drain does not. Checked by mutating the runner: the test did not finish within 250 s. Source: mutation run, 2026-10-16.
+- **Exit code of a process ended by a signal** (Linux, `kill -9` of itself): reported as a non-zero code, not a timeout. Value not recorded.
+- **Runner overhead** over a bare `Process.Start` of the fake agy: measured by `OverheadTests` (median of 7 rounds), written to the test output; the ceiling in the test is 250 ms. Linux figure from the run: see the test output of the commit's CI-less run, not recorded here.
+
+### Windows agy shape
+
+Not settled: only the owner can check whether the Windows installer places `agy.exe` or a batch shim. The runner never launches batch files (DESIGN DL-14). Carried to Phase 7.

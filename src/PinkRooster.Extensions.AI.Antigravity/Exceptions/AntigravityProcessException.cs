@@ -8,4 +8,10 @@ public sealed class AntigravityProcessException : AntigravityException
         : base(message)
     {
     }
+
+    /// <summary>Creates the exception with the exception that caused it.</summary>
+    public AntigravityProcessException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
 }
