@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: Build
+        run: dotnet build PinkRooster.Extensions.AI.Antigravity.sln --configuration Release -warnaserror
+      - name: Unit tests
+        run: dotnet test tests/PinkRooster.Extensions.AI.Antigravity.Tests --configuration Release --no-build
+      - name: Process tests
+        run: dotnet test tests/PinkRooster.Extensions.AI.Antigravity.ProcessTests --configuration Release --no-build
+      - name: Pack
+        if: matrix.os == 'ubuntu-latest'
+        run: dotnet pack src/PinkRooster.Extensions.AI.Antigravity --configuration Release --no-build --output artifacts
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: package
+          path: artifacts/*

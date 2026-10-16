@@ -21,7 +21,7 @@ These apply in every phase; they come from `~/.claude/CLAUDE.md` and the project
 
 ## Phase 1 — Solution, contracts and CI
 
-**Status** — not started
+**Status** — done
 **Rests on** — .NET SDK 10.0.112 is installed and only the .NET 10 runtime is present (`dotnet --list-runtimes`, `research.md § Environment facts the plan relies on`); the layout in DESIGN §10.1 and the boundary types in DESIGN §2.3 are unchanged; `CLAUDE.md` still says "Current phase: documentation".
 **Settle first** —
 - Whether the user approves leaving the documentation phase, which the project `CLAUDE.md` forbids until then (answer, and the edit to its phase line, in `research.md § Phase gate`).
@@ -29,14 +29,14 @@ These apply in every phase; they come from `~/.claude/CLAUDE.md` and the project
 - xunit v2 or v3 (`research.md § Test framework`), and whether to install the .NET 8 runtime for local `net8.0` test runs or rely on CI (`research.md § Local net8`).
 - Whether and when a GitHub remote is created for CI; the workflow is written either way, but only the user creates or pushes a remote.
 **Tasks**
-- [ ] Update the current-phase line of `CLAUDE.md` once the user has approved — line 3 of `CLAUDE.md`.
-- [ ] Create the solution and the projects named in DESIGN §10.1 (library, unit tests, process tests, opt-in integration tests, FakeAgy tool, sample placeholder), with the targets, warning, nullable and XML-doc rules of DEC P3 and central package versions from `research.md § Current package versions`.
-- [ ] Add the MIT licence, a README stub and an editor config if none exists — DEC P4.
-- [ ] Add the CI workflow for ubuntu, windows and macos: build, unit and process tests, pack; no opt-in tests — DESIGN §8.4.
-- [ ] Add the public options class and its validation — SPEC §9.2, FR-029, EC-31; DESIGN C2.
-- [ ] Add the exception hierarchy with its `StandardError`, `ExitCode` and `RawOutput` members — SPEC §9.1, FR-030; DESIGN C13.
-- [ ] Add the internal process-boundary types and a minimal FakeAgy that prints a supplied envelope and exits with a supplied code — DESIGN §2.3, §8.1.
-- [ ] Add tests for options validation and the exception hierarchy with the code — `OptionsValidatorTests`, `ExceptionHierarchyTests` in DESIGN §8.5.
+- [x] Update the current-phase line of `CLAUDE.md` once the user has approved — line 3 of `CLAUDE.md`.
+- [x] Create the solution and the projects named in DESIGN §10.1 (library, unit tests, process tests, opt-in integration tests, FakeAgy tool, sample placeholder), with the targets, warning, nullable and XML-doc rules of DEC P3 and central package versions from `research.md § Current package versions`.
+- [x] Add the MIT licence, a README stub and an editor config if none exists — DEC P4.
+- [x] Add the CI workflow for ubuntu, windows and macos: build, unit and process tests, pack; no opt-in tests — DESIGN §8.4.
+- [x] Add the public options class and its validation — SPEC §9.2, FR-029, EC-31; DESIGN C2.
+- [x] Add the exception hierarchy with its `StandardError`, `ExitCode` and `RawOutput` members — SPEC §9.1, FR-030; DESIGN C13.
+- [x] Add the internal process-boundary types and a minimal FakeAgy that prints a supplied envelope and exits with a supplied code — DESIGN §2.3, §8.1.
+- [x] Add tests for options validation and the exception hierarchy with the code — `OptionsValidatorTests`, `ExceptionHierarchyTests` in DESIGN §8.5.
 **Done when** — `dotnet build -warnaserror` of the whole solution and `dotnet test` of the unit project exit 0 on net10.0; `dotnet pack` of the library produces a package; the CI workflow file exists under `.github/workflows/`; if a remote exists, its first run on all three systems is green and the run link is in the Log.
 
 ## Phase 2 — Input side
@@ -129,4 +129,7 @@ These apply in every phase; they come from `~/.claude/CLAUDE.md` and the project
 
 ## Log
 
-<Empty at hand-over. `/execute-plan` appends: date, phase, what changed and why.>
+<`/execute-plan` appends: date, phase, what changed and why.>
+
+- 2026-10-16 · Phase 1 · Rests on verified: SDK 10.0.112, runtime 10.0.12 only, layout unchanged, CLAUDE.md phase still documentation. Settled in `research.md § Execution, Phase 1`: gate approved by the command, package floor 10.3.0, xunit 2.9.3, tests on net10.0 only locally, no remote. Research done inline, nothing delegated.
+- 2026-10-16 · Phase 1 · done. Built: solution with 6 projects, central package versions, MIT licence, README stub, editor config, CI workflow, options class + validator, 9 exception types, process-boundary types, minimal FakeAgy, 52 unit tests. Done-when output: `dotnet build PinkRooster.Extensions.AI.Antigravity.sln -warnaserror` → 0 warnings, 0 errors (library compiled for net8.0 and net10.0 against Abstractions 10.3.0, so `ReasoningEffort` exists at the floor); `dotnet test tests/…Tests` → Passed 52, Failed 0; `dotnet pack` → .nupkg and .snupkg 0.1.0; `.github/workflows/ci.yml` present. No remote exists, so no CI run (recorded, not required). Adjustments: `CLAUDE.md` phase line set to "implementation" (approved by the command); Microsoft.NET.Test.Sdk pinned at 17.14.1 and xunit.runner.visualstudio at 3.1.4, the versions the SDK's own xunit template uses with xunit 2.9.3, instead of the newest 18.x not verified with it; SourceLink comes with the .NET SDK so no package is referenced; `ConsoleSample` and `FakeAgy` are placeholders; one transient `Internal CLR error (0x80131506)` on the first build disappeared after `dotnet build-server shutdown`. Nothing delegated.

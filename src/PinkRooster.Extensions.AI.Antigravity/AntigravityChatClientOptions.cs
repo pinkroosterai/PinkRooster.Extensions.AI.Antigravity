@@ -1,0 +1,59 @@
+using Microsoft.Extensions.AI;
+
+namespace PinkRooster.Extensions.AI.Antigravity;
+
+/// <summary>
+/// Options for <c>AntigravityChatClient</c>. Options are validated and copied when the client is created;
+/// changing an instance afterwards has no effect on an existing client.
+/// </summary>
+public sealed class AntigravityChatClientOptions
+{
+    /// <summary>The preamble used when <see cref="SystemPreamble"/> is not replaced.</summary>
+    public const string DefaultSystemPreamble =
+        "Answer the request below directly in plain text. Do not use any tools, do not read, create, change or delete files, " +
+        "and do not run commands. Your entire output is the reply to the final message.";
+
+    /// <summary>
+    /// Path of the agy executable. When null, the system search path and then the default install directory are searched.
+    /// </summary>
+    public string? ExecutablePath { get; set; }
+
+    /// <summary>The agy model used when the request names none. Null leaves the choice to agy.</summary>
+    public string? DefaultModelId { get; set; }
+
+    /// <summary>The reasoning effort used when the request names none. Null leaves the choice to agy.</summary>
+    public ReasoningEffort? DefaultReasoningEffort { get; set; }
+
+    /// <summary>The longest a single request may run. Default 5 minutes; at least 1 second.</summary>
+    public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>The most agy processes one client runs at once. Default 4; at least 1.</summary>
+    public int MaxConcurrency { get; set; } = 4;
+
+    /// <summary>
+    /// The longest prompt, in characters, that is passed to agy. Default 100,000, and 30,000 on Windows.
+    /// A platform limit on the prompt's size in bytes applies as well; the smaller limit wins.
+    /// </summary>
+    public int MaxPromptLength { get; set; } = OperatingSystem.IsWindows() ? 30_000 : 100_000;
+
+    /// <summary>When true, the agy version is not read or checked.</summary>
+    public bool SkipVersionCheck { get; set; }
+
+    /// <summary>Environment variables added to the host environment for agy. A null value removes the variable.</summary>
+    public IDictionary<string, string?> EnvironmentVariables { get; set; } = new Dictionary<string, string?>();
+
+    /// <summary>The directory under which per-request directories are created. Null uses the system temporary directory.</summary>
+    public string? TemporaryDirectoryRoot { get; set; }
+
+    /// <summary>
+    /// Extra command-line arguments for agy. Flags that the library sets itself or that would break safety or
+    /// statelessness are rejected when the client is created.
+    /// </summary>
+    public IList<string> AdditionalArguments { get; set; } = new List<string>();
+
+    /// <summary>The text placed at the start of every prompt. It must not be empty.</summary>
+    public string SystemPreamble { get; set; } = DefaultSystemPreamble;
+
+    /// <summary>The most bytes read from agy's standard output before the request fails. Default 16 MiB.</summary>
+    public int MaxOutputBytes { get; set; } = 16 * 1024 * 1024;
+}

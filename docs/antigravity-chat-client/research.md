@@ -46,3 +46,25 @@ SDK 10.0.112 and runtime 10.0.12 only (no .NET 8 runtime), agy 1.3.5 at `~/.loca
 - **Lowest Abstractions version that has `ChatOptions.Reasoning`** — carried into Phase 1 `Settle first`; needs a package-by-package check.
 - **Schema validator choice** — carried into Phase 5 `Settle first`; needs a build and a fixture run.
 - **Real "not signed in" output, real-agy behavior on Windows and macOS, agy 1.4.0** — carried into Phase 7; need the owner's machine, sign-in or account.
+
+## Execution, Phase 1, 2026-10-16
+
+### Phase gate
+
+The user ran `/execute-plan antigravity-chat-client` on 2026-10-16 after being told in the plan hand-over that the project `CLAUDE.md` forbids code while its phase is "documentation". Treated as approval to move to implementation; the phase line of `CLAUDE.md` is updated in the same commit as the first code. Source: user's command, this session.
+
+### Package floor
+
+`Microsoft.Extensions.AI.Abstractions` 10.2.0 and older have no `ReasoningOptions` or `ReasoningEffort`; 10.3.0 is the first stable version that has them (checked 10.0.0, 10.1.0, 10.1.1, 10.2.0 absent; 10.3.0, 10.5.0 to 10.9.0 and 10.11.0 present; 10.4.x not opened). Floor for the library: 10.3.0, to be compiled against the floor so no later API is used by accident. Whether 10.3.0 already has `ReasoningEffort.ExtraHigh` is settled by the compile. Source: the `net8.0` assembly of each nupkg from api.nuget.org, searched for the type names, checked 2026-10-16.
+
+### Test framework
+
+xunit 2.9.3 (stable v2 line) with Microsoft.NET.Test.Sdk and plain asserts; xunit.v3 4.0.2 is available and was not chosen because v2 is the established, widely supported runner and the suites here need nothing v3 adds. Revisit if a later phase needs v3 features. Decision made by the executor as a default, 2026-10-16.
+
+### Local net8
+
+The user chose ".NET 10 only for now". Only the .NET 10 runtime is installed. The library still targets `net8.0;net10.0` as DEC P3 says (building for net8.0 needs only the targeting pack, restored from NuGet); tests are built for and run on `net10.0` locally. The `net8.0` test run is left to CI and stays unrun until a remote exists. Interpretation of "just .NET 10": run locally on 10 only, not change the library targets; to be corrected if the user meant single-target. Source: user answer, 2026-10-16.
+
+### Remote
+
+No GitHub remote exists. The workflow file is written; creating or pushing a remote stays with the user. Recorded 2026-10-16.
