@@ -68,3 +68,13 @@ The user chose ".NET 10 only for now". Only the .NET 10 runtime is installed. Th
 ### Remote
 
 No GitHub remote exists. The workflow file is written; creating or pushing a remote stays with the user. Recorded 2026-10-16.
+
+## Execution, Phase 2, 2026-10-16
+
+### Experimental members of `ChatOptions`
+
+At Abstractions 10.3.0, `ChatOptions.ContinuationToken` and `ChatOptions.AllowBackgroundResponses` are marked experimental (diagnostic MEAI001), which `-warnaserror` turns into a build error even for a read. The library only reads them to name them in a debug entry for ignored options, so the single method that does so suppresses MEAI001 locally; nothing experimental is exposed or used. Other members read so far (`Instructions`, `Reasoning`'s enum `ReasoningEffort`, `ResponseFormat`, `ToolMode`) compile without suppression at the floor version. Source: compiler output of the Phase 2 build against 10.3.0, 2026-10-16.
+
+### Test tooling observation
+
+Tests that must prove a guard exists were checked once by breaking the guard (prompt-start rule in `PromptBuilder`): four tests failed, then passed again after restoring it. Source: local run, 2026-10-16.

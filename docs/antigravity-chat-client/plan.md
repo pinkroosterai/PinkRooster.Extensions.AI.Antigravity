@@ -41,16 +41,16 @@ These apply in every phase; they come from `~/.claude/CLAUDE.md` and the project
 
 ## Phase 2 — Input side
 
-**Status** — not started
+**Status** — done
 **Rests on** — Phase 1's options, exceptions and boundary types exist and build; DESIGN §4.1 (prompt parts) and §4.2 (argument table) are unchanged.
 **Settle first** — Nothing. The preamble wording is the executor's; whether it works is measured in Phase 7 (SPEC A-5).
 **Tasks**
-- [ ] Add the request validator for roles, content types, tools, tool mode, empty input and schema shape — SPEC FR-007, FR-008, SO-002, SO-008, EC-22 to EC-27; DESIGN C3, §4.1.
-- [ ] Add the prompt builder with preamble, per-request code on turn headers, format section and both length limits — SPEC FR-006, FR-012 to FR-014, SO-009, EC-20, EC-21; DESIGN C4, §4.1, §5.7.
-- [ ] Add the invocation builder that owns every agy flag, including the effort rule for level-qualified model names — SPEC FR-004, FR-009 to FR-011, FR-013, FR-028; DESIGN C6, §4.2; facts F-34, F-37.
-- [ ] Add the request directory (owner-only creation, schema file, deletion with retry and warning) — SPEC FR-003, NFR-007, EC-28; DESIGN C8, §5.7; `research.md § Request directory permissions`.
-- [ ] Add executable lookup and the version check with its cache — SPEC FR-021, FR-022, FR-038, EC-01 to EC-03, EC-33; DESIGN C5, §3.4.
-- [ ] Write the tests for each with the code, one test per EC id listed in DESIGN §8.6 for these components, plus `PromptBuilderTests`, `InvocationBuilderTests`, `RequestValidatorTests`, `RequestDirectoryTests`, `AgyLocatorTests`, `VersionCheckerTests` from §8.5.
+- [x] Add the request validator for roles, content types, tools, tool mode, empty input and schema shape — SPEC FR-007, FR-008, SO-002, SO-008, EC-22 to EC-27; DESIGN C3, §4.1.
+- [x] Add the prompt builder with preamble, per-request code on turn headers, format section and both length limits — SPEC FR-006, FR-012 to FR-014, SO-009, EC-20, EC-21; DESIGN C4, §4.1, §5.7.
+- [x] Add the invocation builder that owns every agy flag, including the effort rule for level-qualified model names — SPEC FR-004, FR-009 to FR-011, FR-013, FR-028; DESIGN C6, §4.2; facts F-34, F-37.
+- [x] Add the request directory (owner-only creation, schema file, deletion with retry and warning) — SPEC FR-003, NFR-007, EC-28; DESIGN C8, §5.7; `research.md § Request directory permissions`.
+- [x] Add executable lookup and the version check with its cache — SPEC FR-021, FR-022, FR-038, EC-01 to EC-03, EC-33; DESIGN C5, §3.4.
+- [x] Write the tests for each with the code, one test per EC id listed in DESIGN §8.6 for these components, plus `PromptBuilderTests`, `InvocationBuilderTests`, `RequestValidatorTests`, `RequestDirectoryTests`, `AgyLocatorTests`, `VersionCheckerTests` from §8.5.
 **Done when** — those test classes pass with `dotnet test`; a repository-wide search finds `System.Diagnostics.Process` in no file (the runner arrives in Phase 3); the unit suite as a whole still passes.
 
 ## Phase 3 — Process runner and FakeAgy
@@ -133,3 +133,5 @@ These apply in every phase; they come from `~/.claude/CLAUDE.md` and the project
 
 - 2026-10-16 · Phase 1 · Rests on verified: SDK 10.0.112, runtime 10.0.12 only, layout unchanged, CLAUDE.md phase still documentation. Settled in `research.md § Execution, Phase 1`: gate approved by the command, package floor 10.3.0, xunit 2.9.3, tests on net10.0 only locally, no remote. Research done inline, nothing delegated.
 - 2026-10-16 · Phase 1 · done. Built: solution with 6 projects, central package versions, MIT licence, README stub, editor config, CI workflow, options class + validator, 9 exception types, process-boundary types, minimal FakeAgy, 52 unit tests. Done-when output: `dotnet build PinkRooster.Extensions.AI.Antigravity.sln -warnaserror` → 0 warnings, 0 errors (library compiled for net8.0 and net10.0 against Abstractions 10.3.0, so `ReasoningEffort` exists at the floor); `dotnet test tests/…Tests` → Passed 52, Failed 0; `dotnet pack` → .nupkg and .snupkg 0.1.0; `.github/workflows/ci.yml` present. No remote exists, so no CI run (recorded, not required). Adjustments: `CLAUDE.md` phase line set to "implementation" (approved by the command); Microsoft.NET.Test.Sdk pinned at 17.14.1 and xunit.runner.visualstudio at 3.1.4, the versions the SDK's own xunit template uses with xunit 2.9.3, instead of the newest 18.x not verified with it; SourceLink comes with the .NET SDK so no package is referenced; `ConsoleSample` and `FakeAgy` are placeholders; one transient `Internal CLR error (0x80131506)` on the first build disappeared after `dotnet build-server shutdown`. Nothing delegated.
+- 2026-10-16 · Phase 2 · Rests on verified: Phase 1 builds and tests pass; DESIGN §4.1, §4.2 unchanged (file untouched since the Phase 1 commit). Settle first: nothing. Committed Phase 1 as b5c8a69.
+- 2026-10-16 · Phase 2 · done. Built: request validator, prompt builder with per-request turn codes and platform limits, invocation builder (sole owner of agy flags), request directory, executable lookup, version checker with success-only cache; fake process runner for tests. Done-when output: `dotnet test` → Passed 190, Failed 0 (Tests project; covers EC-01–03, 20–28, 33 plus FR-004, 006, 007–014, 021, 022, 028, 038, SO-002, 008, 009); full solution `dotnet build -warnaserror` → 0 warnings, 0 errors; search for `System.Diagnostics` in `src/` and `tools/` → no hits. One guard mutated to confirm tests catch it (see research.md). Adjustments: `ChatOptions.ContinuationToken` and `AllowBackgroundResponses` are experimental (MEAI001), suppressed locally in `InvocationBuilder.IgnoredOptionNames`; `PromptBuilder` also prefixes a neutral line when a custom preamble starts with `-` (design said `/` or `-`; SPEC FR-013 says `/`); `ValidatedRequest` is the validator's output (design said "pure checks"; returning the reduced request avoids a second walk of the messages). Nothing delegated.
