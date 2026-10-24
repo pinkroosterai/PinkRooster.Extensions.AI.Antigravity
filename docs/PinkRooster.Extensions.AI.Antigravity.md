@@ -1,13 +1,11 @@
-<img src="https://raw.githubusercontent.com/pinkroosterai/PinkRooster/a3815ce62a2491a8ee1c7401e1e48aa43ef20a85/assets/logo.png" alt="PinkRooster logo" width="120" />
+![PinkRooster logo](https://raw.githubusercontent.com/pinkroosterai/PinkRooster.Extensions.AI.Antigravity/main/assets/logo.png)
 
 # PinkRooster.Extensions.AI.Antigravity
 
 Microsoft.Extensions.AI chat client for Google Antigravity (`agy`).
 
-Status: preview (`0.1.0-preview.1`), developed against the .NET 10 SDK.
-
 ```text
-dotnet add package PinkRooster.Extensions.AI.Antigravity --prerelease
+dotnet add package PinkRooster.Extensions.AI.Antigravity
 ```
 
 ## Quickstart
