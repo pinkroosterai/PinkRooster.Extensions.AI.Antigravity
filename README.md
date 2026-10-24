@@ -7,7 +7,7 @@
 **An `IChatClient` for the Antigravity CLI (`agy`): plain text, JSON-schema answers, streaming, images and your own `AIFunction` tools, on .NET 8 and .NET 10.**
 
 [![CI](https://github.com/pinkroosterai/PinkRooster.Extensions.AI.Antigravity/actions/workflows/ci.yml/badge.svg)](https://github.com/pinkroosterai/PinkRooster.Extensions.AI.Antigravity/actions/workflows/ci.yml)
-[![Status](https://img.shields.io/badge/status-0.1.0%20not%20published-orange)](#compatibility)
+[![NuGet](https://img.shields.io/nuget/v/PinkRooster.Extensions.AI.Antigravity.svg)](https://www.nuget.org/packages/PinkRooster.Extensions.AI.Antigravity)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![.NET 8 | 10](https://img.shields.io/badge/.NET-8.0%20%7C%2010.0-512BD4)](https://dotnet.microsoft.com/)
 
@@ -60,8 +60,6 @@ You need .NET 8 or .NET 10 and the Antigravity CLI **1.3.5 or newer**, installed
 ```text
 dotnet add package PinkRooster.Extensions.AI.Antigravity
 ```
-
-(Once published.)
 
 ```csharp
 using Microsoft.Extensions.AI;

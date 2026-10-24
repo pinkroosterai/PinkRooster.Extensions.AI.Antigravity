@@ -4,8 +4,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ## [Unreleased]
 
-First release (0.1.0) is not published yet. Contents so far:
+## [0.1.0] - 2026-10-24
+
+First release of PinkRooster.Extensions.AI.Antigravity.
 
 - `AntigravityChatClient`, an `IChatClient` on top of `agy` print mode: text and JSON-schema responses, streaming, image input, caller tools through a loopback MCP bridge, a per-request agy home on Linux.
 - `AddAntigravityChatClient` for dependency injection and a set of `AntigravityException` types.
-- Targets `net10.0` only.
+- Targets `net10.0`.
