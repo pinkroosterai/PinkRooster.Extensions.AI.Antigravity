@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![.NET 8 | 10](https://img.shields.io/badge/.NET-8.0%20%7C%2010.0-512BD4)](https://dotnet.microsoft.com/)
 
-[Usage terms](#read-this-first-usage-terms) · [The idea](#the-idea) · [Quickstart](#quickstart) · [Features](#features) · [Options](#options) · [Errors](#errors) · [FAQ](#faq) · [Contributing](#development-and-license)
+[Usage terms](#read-this-first-usage-terms) · [The idea](#the-idea) · [Quickstart](#quickstart) · [Features](#features) · [Options](#options) · [Errors](#errors) · [FAQ](#faq) · [Contributing](#feedback-contributing-security-and-license)
 
 </div>
 
@@ -270,14 +270,13 @@ Where agy's documentation and its behavior disagree, the library follows the beh
 
 **Does the library log my prompts?** Never. See [Logging](#logging).
 
-## Development and license
+## Build and test
 
 You need the .NET 10 SDK. From the repository root:
 
 ```text
-dotnet build PinkRooster.Extensions.AI.Antigravity.sln -warnaserror
-dotnet test tests/PinkRooster.Extensions.AI.Antigravity.Tests
-dotnet test tests/PinkRooster.Extensions.AI.Antigravity.ProcessTests
+dotnet build PinkRooster.Extensions.AI.Antigravity.slnx -c Release
+dotnet test --solution PinkRooster.Extensions.AI.Antigravity.slnx -c Release
 dotnet pack src/PinkRooster.Extensions.AI.Antigravity -c Release
 ```
 
@@ -285,4 +284,6 @@ The unit and process tests need no agy, model or network. The `net8.0` tests run
 
 Where to read more: [`docs/specification.md`](docs/specification.md) (requirements), [`docs/software-design.md`](docs/software-design.md) (design), [`docs/how-it-works.md`](docs/how-it-works.md) (the whole flow in prose) and [`docs/deferred.md`](docs/deferred.md) (out of scope, with extension notes).
 
-Found a bug or missing something? [Open an issue](https://github.com/pinkroosterai/PinkRooster.Extensions.AI.Antigravity/issues). The code is under the MIT terms in [LICENSE](LICENSE).
+## Feedback, contributing, security and license
+
+Found a bug or missing something? [Open an issue](https://github.com/pinkroosterai/PinkRooster.Extensions.AI.Antigravity/issues). Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Report a vulnerability as [SECURITY.md](SECURITY.md) describes. The code is under the [MIT](LICENSE) license.
