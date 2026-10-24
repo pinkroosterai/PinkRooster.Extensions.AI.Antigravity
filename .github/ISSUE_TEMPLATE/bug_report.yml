@@ -1,0 +1,39 @@
+name: Bug report
+description: Something does not work as the README says
+labels: [bug]
+body:
+  - type: input
+    id: library
+    attributes:
+      label: Library version
+    validations:
+      required: true
+  - type: input
+    id: agy
+    attributes:
+      label: agy version (`agy --version`)
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Smallest code that shows it
+      render: csharp
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output or exception
+      description: The library never logs prompts or answers. Remove anything private before you paste.
+      render: text

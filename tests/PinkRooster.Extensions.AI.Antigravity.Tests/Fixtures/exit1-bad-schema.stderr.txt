@@ -1,0 +1,1 @@
+Error: invalid --json-schema: schema is not valid JSON: invalid character 'b' looking for beginning of object key string

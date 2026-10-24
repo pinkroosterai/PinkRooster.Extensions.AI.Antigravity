@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PinkRooster.Extensions.AI.Antigravity/PinkRooster.Extensions.AI.Antigravity.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PinkRooster.Extensions.AI.Antigravity.IntegrationTests/PinkRooster.Extensions.AI.Antigravity.IntegrationTests.csproj" />
+    <Project Path="tests/PinkRooster.Extensions.AI.Antigravity.ProcessTests/PinkRooster.Extensions.AI.Antigravity.ProcessTests.csproj" />
+    <Project Path="tests/PinkRooster.Extensions.AI.Antigravity.Samples.Tests/PinkRooster.Extensions.AI.Antigravity.Samples.Tests.csproj" />
+    <Project Path="tests/PinkRooster.Extensions.AI.Antigravity.Tests/PinkRooster.Extensions.AI.Antigravity.Tests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/PinkRooster.Extensions.AI.Antigravity.Samples.Console/PinkRooster.Extensions.AI.Antigravity.Samples.Console.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/PinkRooster.Extensions.AI.Antigravity.FakeAgy/PinkRooster.Extensions.AI.Antigravity.FakeAgy.csproj" />
+  </Folder>
+</Solution>

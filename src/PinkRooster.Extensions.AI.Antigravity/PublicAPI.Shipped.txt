@@ -1,0 +1,75 @@
+#nullable enable
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClient
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClient.AntigravityChatClient(PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions? options = null, Microsoft.Extensions.Logging.ILogger<PinkRooster.Extensions.AI.Antigravity.AntigravityChatClient!>? logger = null) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClient.Dispose() -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClient.GetResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClient.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClient.GetStreamingResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.ChatResponseUpdate!>!
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.AdditionalArguments.get -> System.Collections.Generic.IList<string!>!
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.AdditionalArguments.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.AntigravityChatClientOptions() -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.DefaultModelId.get -> string?
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.DefaultModelId.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.DefaultReasoningEffort.get -> Microsoft.Extensions.AI.ReasoningEffort?
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.DefaultReasoningEffort.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.EnvironmentVariables.get -> System.Collections.Generic.IDictionary<string!, string?>!
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.EnvironmentVariables.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.ExecutablePath.get -> string?
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.ExecutablePath.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.IsolateAgyHome.get -> bool
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.IsolateAgyHome.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.MaxConcurrency.get -> int
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.MaxConcurrency.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.MaxOutputBytes.get -> int
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.MaxOutputBytes.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.MaxPromptLength.get -> int
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.MaxPromptLength.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.MaxToolCalls.get -> int
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.MaxToolCalls.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.SkipVersionCheck.get -> bool
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.SkipVersionCheck.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.SystemPreamble.get -> string!
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.SystemPreamble.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.TemporaryDirectoryRoot.get -> string?
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.TemporaryDirectoryRoot.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.Timeout.get -> System.TimeSpan
+PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.Timeout.set -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityException
+PinkRooster.Extensions.AI.Antigravity.AntigravityException.AntigravityException(string! message) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityException.AntigravityException(string! message, System.Exception! innerException) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityException.ExitCode.get -> int?
+PinkRooster.Extensions.AI.Antigravity.AntigravityException.ExitCode.init -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityException.StandardError.get -> string?
+PinkRooster.Extensions.AI.Antigravity.AntigravityException.StandardError.init -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityInvalidOutputException
+PinkRooster.Extensions.AI.Antigravity.AntigravityInvalidOutputException.AntigravityInvalidOutputException(string! message, string? rawOutput) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityInvalidOutputException.RawOutput.get -> string?
+PinkRooster.Extensions.AI.Antigravity.AntigravityNotAuthenticatedException
+PinkRooster.Extensions.AI.Antigravity.AntigravityNotAuthenticatedException.AntigravityNotAuthenticatedException(string! message) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityNotFoundException
+PinkRooster.Extensions.AI.Antigravity.AntigravityNotFoundException.AntigravityNotFoundException(string! message, System.Collections.Generic.IReadOnlyList<string!>! searchedLocations) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityNotFoundException.SearchedLocations.get -> System.Collections.Generic.IReadOnlyList<string!>!
+PinkRooster.Extensions.AI.Antigravity.AntigravityOutputException
+PinkRooster.Extensions.AI.Antigravity.AntigravityOutputException.AntigravityOutputException(string! message) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityProcessException
+PinkRooster.Extensions.AI.Antigravity.AntigravityProcessException.AntigravityProcessException(string! message) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityProcessException.AntigravityProcessException(string! message, System.Exception! innerException) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityPromptTooLargeException
+PinkRooster.Extensions.AI.Antigravity.AntigravityPromptTooLargeException.AntigravityPromptTooLargeException(string! message, long length, long limit) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityPromptTooLargeException.Length.get -> long
+PinkRooster.Extensions.AI.Antigravity.AntigravityPromptTooLargeException.Limit.get -> long
+PinkRooster.Extensions.AI.Antigravity.AntigravityRunException
+PinkRooster.Extensions.AI.Antigravity.AntigravityRunException.AntigravityRunException(string! message, System.Collections.Generic.IReadOnlyList<string!>? deniedActions = null) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityRunException.DeniedActions.get -> System.Collections.Generic.IReadOnlyList<string!>!
+PinkRooster.Extensions.AI.Antigravity.AntigravityServiceCollectionExtensions
+PinkRooster.Extensions.AI.Antigravity.AntigravityTimeoutException
+PinkRooster.Extensions.AI.Antigravity.AntigravityTimeoutException.AntigravityTimeoutException(string! message, System.TimeSpan timeout) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityTimeoutException.Timeout.get -> System.TimeSpan
+PinkRooster.Extensions.AI.Antigravity.AntigravityVersionException
+PinkRooster.Extensions.AI.Antigravity.AntigravityVersionException.AntigravityVersionException(string! message, string? foundVersion, string! requiredVersion) -> void
+PinkRooster.Extensions.AI.Antigravity.AntigravityVersionException.FoundVersion.get -> string?
+PinkRooster.Extensions.AI.Antigravity.AntigravityVersionException.RequiredVersion.get -> string!
+const PinkRooster.Extensions.AI.Antigravity.AntigravityChatClient.MinimumAgyVersion = "1.3.5" -> string!
+const PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions.DefaultSystemPreamble = "Answer the request below directly in plain text. Do not use any tools, do not read, create, change or delete files, and do not run commands. Your entire output is the reply to the final message." -> string!
+static PinkRooster.Extensions.AI.Antigravity.AntigravityServiceCollectionExtensions.AddAntigravityChatClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<PinkRooster.Extensions.AI.Antigravity.AntigravityChatClientOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

@@ -1,0 +1,14 @@
+<Project>
+
+    <!-- Sibling packages are versioned in lockstep, and are tested and released as one set, so a
+         packed ProjectReference to a project of this repository depends on exactly this version ([x.y.z])
+         instead of NuGet's default of ">= x.y.z". -->
+    <Target Name="PinExampleSiblingVersions" AfterTargets="_GetProjectReferenceVersions" Condition="'$(IsPackable)' != 'false'">
+        <ItemGroup>
+            <_ProjectReferencesWithVersions Update="@(_ProjectReferencesWithVersions)"
+                                            Condition="$([System.String]::Copy('%(FullPath)').StartsWith('$(MSBuildThisFileDirectory)'))"
+                                            ProjectVersion="[$(Version)]"/>
+        </ItemGroup>
+    </Target>
+
+</Project>

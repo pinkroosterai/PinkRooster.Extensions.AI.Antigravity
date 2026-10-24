@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest something new
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you need, and what do you do today instead?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like the API or behaviour to be?
+  - type: markdown
+    attributes:
+      value: Check `docs/deferred.md` first; some things are out of scope on purpose and the file says how they could be added.

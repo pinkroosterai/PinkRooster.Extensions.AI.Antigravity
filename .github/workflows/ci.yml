@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore PinkRooster.Extensions.AI.Antigravity.slnx
+      - name: Build
+        run: dotnet build PinkRooster.Extensions.AI.Antigravity.slnx -c Release --no-restore
+      - name: Test
+        run: dotnet test --solution PinkRooster.Extensions.AI.Antigravity.slnx -c Release --no-build
+      - name: Pack packages
+        run: dotnet pack PinkRooster.Extensions.AI.Antigravity.slnx -c Release --no-build --no-restore -o artifacts
+      - name: Check packages
+        shell: bash
+        run: |
+          version=$(dotnet msbuild src/PinkRooster.Extensions.AI.Antigravity/PinkRooster.Extensions.AI.Antigravity.csproj -getProperty:Version)
+          for id in PinkRooster.Extensions.AI.Antigravity; do
+            for ext in nupkg snupkg; do
+              [ -f "artifacts/$id.$version.$ext" ] || { echo "Missing artifacts/$id.$version.$ext"; exit 1; }
+            done
+          done
+          count=$(ls artifacts/*.nupkg | wc -l)
+          [ "$count" -eq 1 ] || { echo "Expected 1 packages, found $count"; ls artifacts; exit 1; }
+
+  publish-feed:
+    name: Publish to the GitHub Packages feed
+    needs: verify
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - name: Pack with the CI version
+        run: |
+          version=$(dotnet msbuild src/PinkRooster.Extensions.AI.Antigravity/PinkRooster.Extensions.AI.Antigravity.csproj -getProperty:Version)
+          dotnet pack PinkRooster.Extensions.AI.Antigravity.slnx -c Release -p:Version=$version.ci.${{ github.run_number }} -o artifacts
+      - name: Push to the feed
+        run: dotnet nuget push "artifacts/*.nupkg" --source https://nuget.pkg.github.com/pinkroosterai/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
