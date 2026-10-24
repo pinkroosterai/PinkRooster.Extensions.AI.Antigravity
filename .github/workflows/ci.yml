@@ -58,6 +58,10 @@ jobs:
       - name: Pack with the CI version
         run: |
           version=$(dotnet msbuild src/PinkRooster.Extensions.AI.Antigravity/PinkRooster.Extensions.AI.Antigravity.csproj -getProperty:Version)
-          dotnet pack PinkRooster.Extensions.AI.Antigravity.slnx -c Release -p:Version=$version.ci.${{ github.run_number }} -o artifacts
+          case "$version" in
+            *-*) ci_version="$version.ci.${{ github.run_number }}" ;;
+            *)   ci_version="$version-ci.${{ github.run_number }}" ;;
+          esac
+          dotnet pack PinkRooster.Extensions.AI.Antigravity.slnx -c Release -p:Version="$ci_version" -o artifacts
       - name: Push to the feed
         run: dotnet nuget push "artifacts/*.nupkg" --source https://nuget.pkg.github.com/pinkroosterai/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
